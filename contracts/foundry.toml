@@ -1,0 +1,25 @@
+[profile.default]
+src = "src"
+test = "test"
+script = "script"
+out = "out"
+libs = ["lib", "node_modules"]
+solc_version = "0.8.28"
+evm_version = "cancun"
+optimizer = true
+optimizer_runs = 10_000
+bytecode_hash = "none"
+cbor_metadata = false
+ffi = true
+fs_permissions = [{ access = "read-write", path = "./deployments/" }, { access = "read", path = "./test/fixtures/" }]
+
+[fmt]
+line_length = 120
+tab_width = 2
+quote_style = "single"
+bracket_spacing = false
+int_types = "long"
+number_underscore = "thousands"
+
+[rpc_endpoints]
+mainnet = "${ETHEREUM_MAINNET_RPC}"

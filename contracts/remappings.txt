@@ -1,0 +1,10 @@
+forge-std/=lib/forge-std/src/
+@oz/=node_modules/@openzeppelin/contracts/
+@oz-upgradeable/=node_modules/@openzeppelin/contracts-upgradeable/
+lean-imt/InternalLeanIMT.sol=node_modules/@zk-kit/lean-imt.sol/InternalLeanIMT.sol
+lean-imt/Constants.sol=node_modules/@zk-kit/lean-imt.sol/Constants.sol
+lean-imt/LeanIMT.sol=node_modules/@zk-kit/lean-imt.sol/LeanIMT.sol
+poseidon/=node_modules/poseidon-solidity/
+contracts/=lib/privacy-pools-core/packages/contracts/src/contracts/
+interfaces/=lib/privacy-pools-core/packages/contracts/src/interfaces/
+zipnet/=src/zipnet/

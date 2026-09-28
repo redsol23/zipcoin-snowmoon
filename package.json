@@ -1,0 +1,11 @@
+{
+  "name": "zipnet",
+  "private": true,
+  "packageManager": "pnpm@9.12.3",
+  "engines": { "node": ">=20" },
+  "scripts": {
+    "build:contracts": "cd contracts && forge build",
+    "test:contracts": "cd contracts && forge test",
+    "typecheck": "pnpm -r typecheck"
+  }
+}

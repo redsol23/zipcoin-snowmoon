@@ -1,0 +1,15 @@
+{
+  "name": "@zipnet/contracts",
+  "private": true,
+  "dependencies": {
+    "@openzeppelin/contracts": "5.1.0",
+    "@openzeppelin/contracts-upgradeable": "5.0.2",
+    "@semaphore-protocol/contracts": "4.14.3",
+    "@zk-kit/lean-imt.sol": "2.0.0",
+    "poseidon-solidity": "0.0.5"
+  },
+  "devDependencies": {
+    "@0xbow/privacy-pools-core-sdk": "1.5.0",
+    "viem": "2.56.8"
+  }
+}

@@ -1,0 +1,18 @@
+{
+  "name": "@zipnet/veridia",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "tsx src/main.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "latest",
+    "@scure/bip39": "2.4.0",
+    "@semaphore-protocol/core": "4.14.3",
+    "@zipnet/sdk": "workspace:*",
+    "viem": "2.56.8",
+    "zod": "^3.25.0"
+  },
+  "devDependencies": { "@types/node": "^22", "tsx": "^4.19.0", "typescript": "^5.7.0" }
+}

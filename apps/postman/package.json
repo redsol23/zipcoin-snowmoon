@@ -1,0 +1,14 @@
+{
+  "name": "@zipnet/postman",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "tsx src/main.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@zipnet/sdk": "workspace:*",
+    "viem": "2.56.8"
+  },
+  "devDependencies": { "@types/node": "^22", "tsx": "^4.19.0", "typescript": "^5.7.0" }
+}

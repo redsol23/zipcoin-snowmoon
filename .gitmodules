@@ -1,0 +1,6 @@
+[submodule "contracts/lib/privacy-pools-core"]
+	path = contracts/lib/privacy-pools-core
+	url = https://github.com/0xbow-io/privacy-pools-core
+[submodule "contracts/lib/forge-std"]
+	path = contracts/lib/forge-std
+	url = https://github.com/foundry-rs/forge-std

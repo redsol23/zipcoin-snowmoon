@@ -1,0 +1,3 @@
+#!/usr/bin/env sh
+# Blocks commits that would publish secrets or personal identity (see scripts/guard.mjs).
+exec node scripts/guard.mjs staged

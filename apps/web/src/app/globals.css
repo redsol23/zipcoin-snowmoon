@@ -1,0 +1,20 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light;
+}
+
+body {
+  font-variant-numeric: tabular-nums;
+}
+
+::selection {
+  background: #c9d3cb;
+}
+
+:focus-visible {
+  outline: 2px solid #18241f;
+  outline-offset: 2px;
+}

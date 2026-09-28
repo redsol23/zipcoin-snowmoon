@@ -1,0 +1,29 @@
+{
+  "name": "@zipnet/web",
+  "private": true,
+  "scripts": {
+    "dev": "next dev --port 3100",
+    "build": "next build",
+    "start": "next start --port 3100",
+    "typecheck": "tsc --noEmit",
+    "predev": "node scripts/copy-artifacts.mjs",
+    "prebuild": "node scripts/copy-artifacts.mjs"
+  },
+  "dependencies": {
+    "clsx": "^2.1.0",
+    "next": "^15.1.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "@zipnet/sdk": "workspace:*",
+    "viem": "2.56.8"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "autoprefixer": "^10.4.0",
+    "postcss": "^8.4.0",
+    "tailwindcss": "^3.4.0",
+    "typescript": "^5.7.0"
+  }
+}

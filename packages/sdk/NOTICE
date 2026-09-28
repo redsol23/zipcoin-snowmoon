@@ -1,0 +1,6 @@
+The hashing, key-derivation, Merkle and proving helpers in src/tree.ts, src/keys.ts and src/prove.ts follow
+@0xbow/privacy-pools-core-sdk (https://github.com/0xbow-io/privacy-pools-core, Apache-2.0), so notes made with this
+SDK stay compatible with any Privacy Pools wallet.
+
+The circuit artifacts in artifacts/ are the 0xbow Privacy Pools ceremony outputs (Apache-2.0). Their SHA-256 digests
+match the ones pinned by @0xbow/privacy-pools-core-sdk 1.5.0.

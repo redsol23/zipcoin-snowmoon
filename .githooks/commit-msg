@@ -1,0 +1,3 @@
+#!/usr/bin/env sh
+# Blocks commit messages with co-author/sign-off trailers or anything the guard would block.
+exec node scripts/guard.mjs message "$1"

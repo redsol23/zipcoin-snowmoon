@@ -1,0 +1,16 @@
+#!/usr/bin/env sh
+# Before anything leaves this machine: re-scan every outgoing commit, then typecheck and run the contract tests.
+set -e
+node scripts/guard.mjs remote
+z=0000000000000000000000000000000000000000
+while read -r local_ref local_sha remote_ref remote_sha; do
+  [ "$local_sha" = "$z" ] && continue
+  if [ "$remote_sha" = "$z" ]; then range="$local_sha"; else range="$remote_sha..$local_sha"; fi
+  node scripts/guard.mjs push "$range"
+done
+for p in packages/sdk apps/postman apps/courier apps/veridia apps/web; do
+  node packages/sdk/node_modules/typescript/bin/tsc --noEmit -p "$p"
+done
+echo "guard: typecheck ok"
+(cd contracts && PATH="$HOME/.foundry/bin:$PATH" forge test -q)
+echo "guard: forge tests ok"
