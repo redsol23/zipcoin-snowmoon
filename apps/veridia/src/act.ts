@@ -263,10 +263,13 @@ export async function vote(c: Character, pollId: bigint, option: number): Promis
   const who = people.get(c.id)!;
   const poll = (await openPolls()).find((p) => p.pollId === pollId);
   if (!poll) throw new Skip("that poll is closed");
+  if (facts.voted[c.id]?.includes(pollId.toString())) throw new Skip("already answered that poll");
   const scope = (await pub.readContract({ address: dep.polls, abi: zipPollsAbi, functionName: "scopeOf", args: [pollId] })) as bigint;
   const message = (await pub.readContract({ address: dep.polls, abi: zipPollsAbi, functionName: "messageOf", args: [option, who.account.address] })) as bigint;
   const proof = await semProof(who, poll.groupId, message, scope);
   const j = await viaCourier("vote", { args: [pollId, option, who.account.address, proof] });
+  (facts.voted[c.id] ??= []).push(pollId.toString());
+  saveFacts();
   return { detail: { pollId: pollId.toString(), option }, job: j.id };
 }
 

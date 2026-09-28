@@ -43,11 +43,12 @@ const semProof = (p: SemProof) => ({
   points: p.points.map((x) => BigInt(x)),
 });
 
-/** Posts and votes arrive as JSON; give viem the exact types of ZipSignal.post / ZipPolls.vote. */
+/** Posts, votes and unlocks arrive as JSON; give viem the exact types of ZipSignal.post / ZipPolls.vote / ZipBadges.unlock. */
 function semaphoreArgs(kind: Kind, a?: unknown[]) {
   if (!a) return a;
   if (kind === "post") return [BigInt(a[0] as string), BigInt(a[1] as string), String(a[2]), semProof(a[3] as SemProof)];
   if (kind === "vote") return [BigInt(a[0] as string), Number(a[1]), a[2], semProof(a[3] as SemProof)];
+  if (kind === "unlock") return [BigInt(a[0] as string), (a[1] as string[][]).map((g) => g.map((x) => BigInt(x)))];
   return a;
 }
 

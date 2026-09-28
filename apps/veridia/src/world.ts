@@ -76,7 +76,11 @@ export function record(e: Omit<Event, "at">) {
 // ---------------------------------------------------------------------------------------------------------------
 
 const FACTS = path.join(cfg.dataDir, "facts.json");
-export const facts: { merchantId: Record<string, string>; badged: string[]; funded: string[] } = fs.existsSync(FACTS)
-  ? JSON.parse(fs.readFileSync(FACTS, "utf8"))
-  : { merchantId: {}, badged: [], funded: [] };
+export const facts: { merchantId: Record<string, string>; badged: string[]; funded: string[]; voted: Record<string, string[]> } = {
+  merchantId: {},
+  badged: [],
+  funded: [],
+  voted: {},
+  ...(fs.existsSync(FACTS) ? JSON.parse(fs.readFileSync(FACTS, "utf8")) : {}),
+};
 export const saveFacts = () => fs.writeFileSync(FACTS, JSON.stringify(facts, null, 1));

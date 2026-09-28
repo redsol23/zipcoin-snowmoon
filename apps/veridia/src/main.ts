@@ -15,7 +15,7 @@ import { formatEther, parseEther } from "viem";
 import { allowance, bootstrap, createPoll, eat, knock, openPolls, post, refresh, Skip, speak, vote, walletZc, zip, zipped, type Outcome } from "./act";
 import { byId, CAST, type Character } from "./cast";
 import { decide, type Intent } from "./mind";
-import { cfg, events, people, record } from "./world";
+import { cfg, events, facts, people, record } from "./world";
 
 async function act(c: Character, i: Intent): Promise<Outcome | null> {
   switch (i.action) {
@@ -50,7 +50,10 @@ async function turn() {
   const situation = {
     zippedZc: Number(formatEther(zipped(who).balance)),
     walletZc: Number(formatEther(await walletZc(who))),
-    openPolls: (await openPolls()).map((p) => ({ pollId: p.pollId.toString(), question: p.question, optionCount: p.optionCount })),
+    // Each resident answers a poll once; only offer the ones they haven't answered
+    openPolls: (await openPolls())
+      .filter((p) => !facts.voted[c.id]?.includes(p.pollId.toString()))
+      .map((p) => ({ pollId: p.pollId.toString(), question: p.question, optionCount: p.optionCount })),
   };
   const { intent, by } = await decide(c, situation);
   try {

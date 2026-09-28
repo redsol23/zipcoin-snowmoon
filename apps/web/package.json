@@ -10,11 +10,12 @@
     "prebuild": "node scripts/copy-artifacts.mjs"
   },
   "dependencies": {
+    "@semaphore-protocol/core": "4.14.3",
+    "@zipnet/sdk": "workspace:*",
     "clsx": "^2.1.0",
     "next": "^15.1.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
-    "@zipnet/sdk": "workspace:*",
     "viem": "2.56.8"
   },
   "devDependencies": {

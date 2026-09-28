@@ -1,13 +1,17 @@
 "use client";
 
-import { masterKeys, mnemonicFromSignature, isMnemonic, zipAddressKeys, ZIP_MESSAGE, type MasterKeys } from "@zipnet/sdk";
+import { masterKeys, mnemonicFromSignature, isMnemonic, semaphoreIdentity, zipAddressKeys, zipBadgesAbi, ZIP_MESSAGE, type MasterKeys } from "@zipnet/sdk";
+import type { Identity } from "@semaphore-protocol/core";
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { createWalletClient, custom, http, type Address, type PublicClient, type WalletClient } from "viem";
 import { generatePrivateKey, privateKeyToAccount } from "viem/accounts";
 
 import { erc20, loadConfig, loadPool, myNotes, publicClient, type Config, type Pool } from "@/lib/wallet";
 
-type Zip = { keys: MasterKeys; privateKey: Uint8Array; publicKey: `0x${string}`; phrase: string };
+type Zip = { keys: MasterKeys; privateKey: Uint8Array; publicKey: `0x${string}`; phrase: string; identity: Identity };
+
+/** A badge lock made by this zip key's identity (ZipBadges.Locked). */
+export type MyLock = { lockId: bigint; tier: number; value: bigint; unlockAt: number; unlocked: boolean };
 
 type Ctx = {
   config: Config | null;
@@ -19,6 +23,7 @@ type Ctx = {
   zip: Zip | null;
   pool: Pool | null;
   notes: ReturnType<typeof myNotes> | null;
+  locks: MyLock[];
   walletZc: bigint;
   refreshing: boolean;
   connectInjected: () => Promise<void>;
@@ -99,7 +104,7 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
   const fromPhrase = (phrase: string): Zip => {
     const keys = masterKeys(phrase);
     const z = zipAddressKeys(keys.masterSecret);
-    return { keys, privateKey: z.privateKey, publicKey: z.publicKey, phrase };
+    return { keys, privateKey: z.privateKey, publicKey: z.publicKey, phrase, identity: semaphoreIdentity(keys) };
   };
 
   const unlock = useCallback(async () => {
@@ -124,7 +129,26 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
     w.signMessage({ account, message: ZIP_MESSAGE }).then((sig) => setZip(fromPhrase(mnemonicFromSignature(sig))));
   }, [config, wallet]);
 
-  const notes = useMemo(() => (config && zip && pool ? myNotes(config, zip.keys, zip.privateKey, pool) : null), [config, zip, pool]);
+  // This identity's badge locks, from events (identityCommitment isn't indexed, so filter client-side)
+  const [locks, setLocks] = useState<MyLock[]>([]);
+  useEffect(() => {
+    if (!config || !pub || !zip) return setLocks([]);
+    const from = BigInt(config.deployment.deployBlock);
+    const lockedEv = zipBadgesAbi.find((x) => x.type === "event" && x.name === "Locked")!;
+    const unlockedEv = zipBadgesAbi.find((x) => x.type === "event" && x.name === "Unlocked")!;
+    Promise.all([
+      pub.getLogs({ address: config.deployment.badges, event: lockedEv as never, fromBlock: from }),
+      pub.getLogs({ address: config.deployment.badges, event: unlockedEv as never, fromBlock: from }),
+    ]).then(([l, u]) => {
+      const done = new Set((u as { args: { lockId: bigint } }[]).map((x) => x.args.lockId));
+      const mine = (l as { args: { lockId: bigint; tier: number; identityCommitment: bigint; value: bigint; unlockAt: bigint } }[])
+        .filter((x) => x.args.identityCommitment === zip.identity.commitment)
+        .map((x) => ({ lockId: x.args.lockId, tier: Number(x.args.tier), value: x.args.value, unlockAt: Number(x.args.unlockAt), unlocked: done.has(x.args.lockId) }));
+      setLocks(mine);
+    });
+  }, [config, pub, zip, pool]);
+
+  const notes = useMemo(() => (config && zip && pool ? myNotes(config, zip.keys, zip.privateKey, pool, locks.length) : null), [config, zip, pool, locks.length]);
 
   const value: Ctx = {
     config,
@@ -136,6 +160,7 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
     zip,
     pool,
     notes,
+    locks,
     walletZc,
     refreshing,
     connectInjected,

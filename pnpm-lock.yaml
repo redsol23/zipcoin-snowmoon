@@ -79,6 +79,9 @@ importers:
 
   apps/web:
     dependencies:
+      '@semaphore-protocol/core':
+        specifier: 4.14.3
+        version: 4.14.3(@types/snarkjs@0.7.9)(commander@12.1.0)
       '@zipnet/sdk':
         specifier: workspace:*
         version: link:../../packages/sdk
@@ -2181,7 +2184,7 @@ snapshots:
 
   '@emnapi/runtime@1.11.3':
     dependencies:
-      tslib: 2.7.0
+      tslib: 2.8.1
     optional: true
 
   '@esbuild/aix-ppc64@0.28.2':

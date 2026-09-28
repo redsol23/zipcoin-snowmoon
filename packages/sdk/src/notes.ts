@@ -1,6 +1,7 @@
 import { openSecrets } from "./crypto";
 import type { PoolState } from "./indexer";
 import { depositSecrets, withdrawalSecrets, type MasterKeys, type NoteSecrets } from "./keys";
+import { badgeReturnSecrets } from "./semaphore";
 import { hashCommitment, hashNullifier, hashPrecommitment } from "./tree";
 
 export type Note = {
@@ -11,7 +12,7 @@ export type Note = {
   commitment: bigint;
   /** How many times this label has been partially spent; the next change note uses withdrawalSecrets(label, children). */
   children: bigint;
-  origin: "deposit" | "received" | "link";
+  origin: "deposit" | "received" | "link" | "badge";
 };
 
 /**
@@ -25,7 +26,7 @@ export function recoverNotes(
   k: MasterKeys,
   scope: bigint,
   state: PoolState,
-  opts: { zipAddressKey?: Uint8Array; links?: NoteSecrets[] } = {},
+  opts: { zipAddressKey?: Uint8Array; links?: NoteSecrets[]; badgeLocks?: number } = {},
 ) {
   const byPre = new Map(state.deposits.map((d) => [d.precommitment, d]));
   const bySpent = new Map(state.withdrawals.map((w) => [w.spentNullifier, w]));
@@ -48,6 +49,8 @@ export function recoverNotes(
     }
   }
   for (const s of opts.links ?? []) roots.push({ s, origin: "link" });
+  // Badge stakes come back under derived secrets once unlocked; scan every lock this key has made
+  for (let i = 0n; i < BigInt(opts.badgeLocks ?? 0); i++) roots.push({ s: badgeReturnSecrets(k, i), origin: "badge" });
 
   const notes: Note[] = [];
   for (const { s, origin } of roots) {

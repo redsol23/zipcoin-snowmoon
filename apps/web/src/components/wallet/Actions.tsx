@@ -20,10 +20,11 @@ import { isAddress, keccak256, parseAbiItem, toHex, type Address, type Hex } fro
 
 import { courierQuote, pickNote, spend, zip, type JobResult } from "@/lib/wallet";
 
+import { Badges, Board, Polls } from "./Signal";
 import { Button, Field, Hold, inputCls, Result, toWei, zc, type Outcome } from "./ui";
 import { useWallet } from "./WalletProvider";
 
-const TABS = ["Zip", "Send", "Pay", "Unzip", "Speak", "Knock"] as const;
+const TABS = ["Zip", "Send", "Pay", "Unzip", "Speak", "Knock", "Badges", "Board", "Polls"] as const;
 type Tab = (typeof TABS)[number];
 
 const when = (j: JobResult) =>
@@ -362,13 +363,16 @@ export function Actions() {
           </button>
         ))}
       </div>
-      <div role="tabpanel" className="max-w-lg pt-6">
+      <div role="tabpanel" className={clsx("pt-6", tab === "Board" || tab === "Polls" || tab === "Badges" ? "max-w-2xl" : "max-w-lg")}>
         {tab === "Zip" && <ZipForm />}
         {tab === "Send" && <SendForm />}
         {tab === "Pay" && <PayForm />}
         {tab === "Unzip" && <UnzipForm />}
         {tab === "Speak" && <SpeakForm />}
         {tab === "Knock" && <KnockForm />}
+        {tab === "Badges" && <Badges />}
+        {tab === "Board" && <Board />}
+        {tab === "Polls" && <Polls />}
       </div>
     </section>
   );

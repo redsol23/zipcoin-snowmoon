@@ -65,8 +65,9 @@ export async function loadPool(c: Config, pub: PublicClient) {
 
 export type Pool = Awaited<ReturnType<typeof loadPool>>;
 
-export function myNotes(c: Config, keys: MasterKeys, zipKey: Uint8Array, pool: Pool) {
-  const r = recoverNotes(keys, c.deployment.scope, pool.state, { zipAddressKey: zipKey });
+export function myNotes(c: Config, keys: MasterKeys, zipKey: Uint8Array, pool: Pool, badgeLocks = 0) {
+  // +5: a lock made moments ago may not be indexed yet, and its return note must still be found once unlocked
+  const r = recoverNotes(keys, c.deployment.scope, pool.state, { zipAddressKey: zipKey, badgeLocks: badgeLocks + 5 });
   const spendable = r.notes.filter((n) => pool.labels.includes(n.label));
   return {
     ...r,

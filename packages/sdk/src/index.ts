@@ -9,3 +9,4 @@ export * from "./notes";
 export * from "./abi";
 export * from "./json";
 export * from "./groups";
+export * from "./semaphore";

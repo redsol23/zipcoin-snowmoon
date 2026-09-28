@@ -25,7 +25,7 @@ import { cfg, pub, wallet } from "./config";
  * a signed Receipt the user can take to ZipCouriers.report if we fail to deliver.
  */
 
-export type Kind = ProcessooorKind | "post" | "vote";
+export type Kind = ProcessooorKind | "post" | "vote" | "unlock";
 
 export type Job = {
   id: string;
@@ -55,6 +55,7 @@ export const GAS: Record<Kind, bigint> = {
   poll: 800_000n,
   post: 350_000n,
   vote: 400_000n,
+  unlock: 600_000n,
 };
 
 const TARGET: Record<Kind, { address: Address; abi: Abi; fn: string }> = {
@@ -67,12 +68,13 @@ const TARGET: Record<Kind, { address: Address; abi: Abi; fn: string }> = {
   poll: { address: dep.polls, abi: zipPollsAbi as Abi, fn: "createAnon" },
   post: { address: dep.signal, abi: zipSignalAbi as Abi, fn: "post" },
   vote: { address: dep.polls, abi: zipPollsAbi as Abi, fn: "vote" },
+  unlock: { address: dep.badges, abi: zipBadgesAbi as Abi, fn: "unlock" },
 };
 
 const call = (j: Job) => {
   const t = TARGET[j.kind];
   const args =
-    j.kind === "post" || j.kind === "vote"
+    j.kind === "post" || j.kind === "vote" || j.kind === "unlock"
       ? j.args!
       : j.kind === "relay"
         ? [j.withdrawal, j.proof, dep.scope]
@@ -106,7 +108,7 @@ export async function quote(kind: Kind) {
 export class Reject extends Error {}
 
 async function checkFee(kind: Kind, withdrawal: { processooor: Address; data: Hex }, proof: SolidityProof<8>) {
-  if (kind === "post" || kind === "vote") return;
+  if (kind === "post" || kind === "vote" || kind === "unlock") return;
   if (withdrawal.processooor.toLowerCase() !== TARGET[kind].address.toLowerCase()) throw new Reject("processooor does not match job kind");
   const c = payloadCourier(kind as ProcessooorKind, withdrawal.data);
   if (c.feeRecipient.toLowerCase() !== cfg.account.address.toLowerCase()) throw new Reject("fee is not addressed to this courier");
@@ -170,7 +172,7 @@ const freeUsed = { day: 0, n: 0 };
  * @param own the courier's own cover traffic: no fee owed
  */
 export async function accept(req: Omit<Job, "id" | "submitAt" | "deadline" | "status">, holdSec: number, own = false) {
-  if (req.kind === "post" || req.kind === "vote") {
+  if (req.kind === "post" || req.kind === "vote" || req.kind === "unlock") {
     const day = Math.floor(Date.now() / 86_400_000);
     if (freeUsed.day !== day) Object.assign(freeUsed, { day, n: 0 });
     if (++freeUsed.n > cfg.freeRelaysPerDay) throw new Reject("free relay budget used up for today");
