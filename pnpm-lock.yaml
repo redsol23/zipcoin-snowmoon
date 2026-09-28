@@ -79,6 +79,9 @@ importers:
 
   apps/web:
     dependencies:
+      '@anthropic-ai/sdk':
+        specifier: 0.129.0
+        version: 0.129.0(zod@3.25.76)
       '@semaphore-protocol/core':
         specifier: 4.14.3
         version: 4.14.3(@types/snarkjs@0.7.9)(commander@12.1.0)

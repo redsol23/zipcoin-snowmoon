@@ -171,3 +171,10 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
   };
   return <WalletCtx.Provider value={value}>{children}</WalletCtx.Provider>;
 }
+
+/** Everything an action needs, or null until a wallet is connected and a zip key unlocked. */
+export function useCtx(): import("@/lib/actions").Ctx | null {
+  const w = useWallet();
+  if (!w.config || !w.pub || !w.zip || !w.pool || !w.notes) return null;
+  return { config: w.config, pub: w.pub, wallet: w.wallet, keys: w.zip.keys, pool: w.pool, notes: w.notes, walletZc: w.walletZc, refresh: w.refresh };
+}

@@ -10,6 +10,7 @@
     "prebuild": "node scripts/copy-artifacts.mjs"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "0.129.0",
     "@semaphore-protocol/core": "4.14.3",
     "@zipnet/sdk": "workspace:*",
     "clsx": "^2.1.0",
