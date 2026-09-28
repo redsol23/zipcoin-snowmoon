@@ -185,7 +185,10 @@ export async function accept(req: Omit<Job, "id" | "submitAt" | "deadline" | "st
   try {
     await pub.simulateContract(call(job) as never);
   } catch (e) {
-    throw new Reject(`simulation reverted: ${(e as Error).message.split("\n")[0]}`);
+    // Keep the decoded error name, or the raw selector when the revert comes from a contract we have no ABI for
+    const err = e as { shortMessage?: string; metaMessages?: string[]; message: string };
+    const detail = [err.shortMessage ?? err.message.split("\n")[0], ...(err.metaMessages ?? []).map((m) => m.trim()).filter(Boolean)].join(" ");
+    throw new Reject(`simulation reverted: ${detail}`);
   }
 
   if (holdSec > 0 && job.proof) {

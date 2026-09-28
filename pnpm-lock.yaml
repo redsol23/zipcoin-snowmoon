@@ -8,6 +8,28 @@ importers:
 
   .: {}
 
+  apps/archive:
+    dependencies:
+      '@zipnet/sdk':
+        specifier: workspace:*
+        version: link:../../packages/sdk
+      '@zipnet/x402':
+        specifier: workspace:*
+        version: link:../../packages/x402
+      viem:
+        specifier: 2.56.8
+        version: 2.56.8(typescript@5.9.3)(zod@3.25.76)
+    devDependencies:
+      '@types/node':
+        specifier: ^22
+        version: 22.7.5
+      tsx:
+        specifier: ^4.19.0
+        version: 4.23.15
+      typescript:
+        specifier: ^5.7.0
+        version: 5.9.3
+
   apps/courier:
     dependencies:
       '@zipnet/sdk':
@@ -193,6 +215,25 @@ importers:
       vitest:
         specifier: ^3.0.5
         version: 3.2.7(@types/node@22.7.5)(jiti@1.21.7)(tsx@4.23.15)
+
+  packages/x402:
+    dependencies:
+      '@zipnet/sdk':
+        specifier: workspace:*
+        version: link:../sdk
+      viem:
+        specifier: 2.56.8
+        version: 2.56.8(typescript@5.9.3)(zod@3.25.76)
+    devDependencies:
+      '@types/node':
+        specifier: ^22
+        version: 22.7.5
+      tsx:
+        specifier: ^4.19.0
+        version: 4.23.15
+      typescript:
+        specifier: ^5.7.0
+        version: 5.9.3
 
 packages:
 
