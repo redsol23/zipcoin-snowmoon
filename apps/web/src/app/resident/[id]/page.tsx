@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { Portrait } from "@/components/Portrait";
+import { VeridiaWorld } from "@/components/world/VeridiaWorld";
 import { Chapter } from "@/components/World";
 import { services, type Resident } from "@/lib/veridia";
 
@@ -19,6 +20,7 @@ export default async function ResidentPage({ params }: { params: Promise<{ id: s
         <h1 className="mt-4 font-story text-4xl tracking-tight">{r.name}</h1>
         <p className="mt-1 text-lichen">{r.shop ? `A shop in ${r.city}` : `Lives in ${r.city}`}</p>
         <p className="mt-4 max-w-md font-story text-lg leading-relaxed">{r.bio}</p>
+        <VeridiaWorld residents={cast} focus={r.id} label={`${r.name}'s corner of Veridia`} className="mt-6 h-72 max-w-md" />
         <dl className="mt-8 space-y-3 text-sm">
           <div>
             <dt className="text-lichen">Public wallet</dt>
