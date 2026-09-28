@@ -8,7 +8,8 @@ while read -r local_ref local_sha remote_ref remote_sha; do
   if [ "$remote_sha" = "$z" ]; then range="$local_sha"; else range="$remote_sha..$local_sha"; fi
   node scripts/guard.mjs push "$range"
 done
-for p in packages/sdk apps/postman apps/courier apps/veridia apps/web; do
+for p in packages/* apps/*; do
+  [ -f "$p/tsconfig.json" ] || continue
   node packages/sdk/node_modules/typescript/bin/tsc --noEmit -p "$p"
 done
 echo "guard: typecheck ok"
