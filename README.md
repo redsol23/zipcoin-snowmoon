@@ -1,4 +1,4 @@
-# snowmoon-zipcoin
+# zipcoin-snowmoon
 
 **Giving life to *Snowmoon*, on Ethereum's cryptographic world computer.**
 
@@ -70,7 +70,7 @@ scripts/            local chain + services, and the publishing guard
 Needs Node 20+, pnpm 9, and [Foundry](https://getfoundry.sh).
 
 ```bash
-git clone --recursive https://github.com/redsol23/snowmoon-zipcoin && cd snowmoon-zipcoin
+git clone --recursive https://github.com/redsol23/zipcoin-snowmoon && cd zipcoin-snowmoon
 pnpm install
 (cd contracts && forge build && forge test)   # real zero-knowledge proofs, generated through FFI
 ./scripts/local-up.sh                         # local chain on :8546 and a full deployment
