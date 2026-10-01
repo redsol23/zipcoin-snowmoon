@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Questions: zipcoin</title>
+<meta name="description" content="Honest answers about privacy, couriers, the tax and launch, and the safety details.">
+<link rel="canonical" href="https://zipcoin.org/learn/faq/">
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#ECF0EC" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#101B1A" media="(prefers-color-scheme: dark)">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/favicon-32.png" type="image/png" sizes="32x32">
+<link rel="manifest" href="/site.webmanifest">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="preload" href="/fonts/newsreader-display.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/fonts/newsreader-text.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="/styles.css">
+<script src="/main.js" defer></script>
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="zipcoin">
+<meta property="og:url" content="https://zipcoin.org/learn/faq/">
+<meta property="og:title" content="Questions">
+<meta property="og:description" content="Honest answers about privacy, couriers, the tax and launch, and the safety details.">
+<meta property="og:image" content="https://zipcoin.org/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="A snow moon over a winter valley with stone houses, and the words: the private money of Snowmoon, on Ethereum.">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Questions">
+<meta name="twitter:description" content="Honest answers about privacy, couriers, the tax and launch, and the safety details.">
+<meta name="twitter:image" content="https://zipcoin.org/og.png">
+<meta name="twitter:image:alt" content="A snow moon over a winter valley with stone houses, and the words: the private money of Snowmoon, on Ethereum.">
+</head>
+<body class="page-learn">
+<a class="skip" href="#main">Skip to content</a>
+<!--art:defs-->
+
+<!--part:header-->
+
+<main id="main">
+
+<section class="page-head page-head-topic" aria-labelledby="topic-title">
+  <div class="wrap">
+    <p class="crumb"><a href="/learn/">How it works</a></p>
+    <h1 id="topic-title">Questions</h1>
+    <p class="intro">Honest answers about privacy, couriers, the tax and launch, and the safety details.</p>
+  </div>
+</section>
+
+<section id="faq" class="band faq" aria-label="Questions">
+  <div class="wrap grid">
+    <div class="faq-col">
+      <details>
+        <summary>Is it private from everyone?</summary>
+        <p>Not perfectly, and it's better to know the limits. Amounts are public; only who paid is hidden. Zipping in is public too. If the postman never approves a deposit, its owner can take it back out publicly with a ragequit, and that shows the link. The postman screens every deposit before it can be spent.</p>
+        <p>Timing can give you away: zip in and spend a minute later in a quiet pool, and the crowd you hide in is small. Couriers' random delays help. A bigger pool helps most.</p>
+      </details>
+      <details>
+        <summary>Do I need to trust the couriers?</summary>
+        <p>No. A courier can delay or refuse your job, but it can't change it: your proof fixes the recipient, the amounts, the message and the courier's own fee. If it signed a receipt and doesn't deliver when it could have, anyone can slash its stake. The pool state it serves can be checked against the chain, and if one courier won't help, another can.</p>
+      </details>
+      <details>
+        <summary>What's the sales tax for?</summary>
+        <p>In the novel, sales tax reaches the government in real time and is enforced by random inspection. Here, every payment settles its tax in the same proof, split three ways: part is burned, part pays the couriers who keep the network private, and the rest goes to a treasury. The rates are fixed when the contracts are deployed, and can't exceed 10%. The treasury's share is planned to go into ZC's pool as liquidity above the range the launch position covers, never below it: <a href="/learn/tax/">sales tax</a>.</p>
+      </details>
+    </div>
+    <div class="faq-col">
+      <details>
+        <summary>What happens to ZC's ETH rewards while my coins are zipped?</summary>
+        <p>ZC pays its holders ETH rewards. While your ZC is zipped in the pool, those rewards go to the project treasury instead of to you. The pool claims them and sends them there; it doesn't change your balance, your notes or the anonymity set. Unzip your ZC and a wallet holding it earns them again. <a href="/learn/privacy/#pool">How the pool does it</a>.</p>
+      </details>
+      <details>
+        <summary>Is this a new token?</summary>
+        <p>No. Zipcoin uses ZC, an existing token on Ethereum at <a href="#safety">the address below</a>. This project adds the contracts that give ZC the novel's features; it doesn't create a token of its own.</p>
+      </details>
+      <details>
+        <summary>When is launch?</summary>
+        <p>When it's ready. Everything is built and tested locally today, with real zero-knowledge proofs. There's no date; follow <a href="https://github.com/redsol23/zipcoin-snowmoon">the repository</a> for news.</p>
+      </details>
+      <details>
+        <summary>What's Emerald?</summary>
+        <p>The wallet's assistant, named after Gladias's assistant in the book. It answers questions, checks a recipient before you pay, and drafts actions as cards you confirm or dismiss. It never asks for your keys or your secret phrase, and it can't move money on its own.</p>
+      </details>
+    </div>
+  </div>
+</section>
+
+<section id="safety" class="band safety" aria-labelledby="safety-title">
+  <div class="wrap grid">
+    <h2 id="safety-title" class="safety-title">Status and safety</h2>
+    <ul class="facts">
+      <li><strong>A fan project.</strong> Not affiliated with the author of <cite>Snowmoon</cite>.</li>
+      <li><strong>Not on mainnet.</strong> Nothing is deployed to Ethereum mainnet. Anything claiming to let you zip on mainnet today isn't this project.</li>
+      <li><strong>Not investment advice.</strong> Nothing here is a reason to buy anything.</li>
+    </ul>
+    <div class="token">
+      <h3 id="zc-title">The ZC token</h3>
+      <p>Zipcoin uses ZC, an existing token on Ethereum. This is its contract address:</p>
+      <div class="addr" role="group" aria-labelledby="zc-title">
+        <code id="zc-address" translate="no">0x2CA7B61B23b15e75aC7<wbr>AB60Dd6f627895d64a46E</code>
+        <button type="button" class="copy" data-copy="zc-address" hidden>Copy address</button>
+        <a class="etherscan" href="https://etherscan.io/token/0x2CA7B61B23b15e75aC7AB60Dd6f627895d64a46E">View on Etherscan</a>
+      </div>
+      <p class="copied" role="status" aria-live="polite"></p>
+      <p class="warn">Always check the address, character by character, before you send anything. Anyone can make a token with the same name.</p>
+    </div>
+  </div>
+</section>
+
+<nav class="pager wrap" aria-label="More topics">
+  <a class="pager-prev" rel="prev" href="/learn/novel/">← Previous: The novel</a>
+  <a class="pager-hub" href="/learn/">All topics</a>
+  <a class="pager-next" href="/">Back to the homepage →</a>
+</nav>
+
+</main>
+
+<!--part:footer-->
+</body>
+</html>

@@ -3,12 +3,12 @@ pragma solidity 0.8.28;
 
 import {IERC20, SafeERC20} from '@oz/token/ERC20/utils/SafeERC20.sol';
 
-import {Constants} from 'contracts/lib/Constants.sol';
 import {ProofLib} from 'contracts/lib/ProofLib.sol';
 import {IEntrypoint} from 'interfaces/IEntrypoint.sol';
 import {IPrivacyPool} from 'interfaces/IPrivacyPool.sol';
 
 import {ZipProcessooor} from './ZipProcessooor.sol';
+import {DeferredPayout} from './lib/DeferredPayout.sol';
 
 /**
  * @title ZipRezip
@@ -20,6 +20,14 @@ import {ZipProcessooor} from './ZipProcessooor.sol';
  *        `ciphertext`; the recipient's client scans `Rezipped` and tries to decrypt (stealth-address style).
  *      This contract is the depositor of record for rezipped notes; the ASP approves them because their value comes
  *      from already-approved notes. No owner.
+ *
+ *      Trust assumption (M-12, pool review L-3): since this contract is the depositor, only it could ragequit a
+ *      rezipped note, and it has no ragequit path: the recipient is anonymous and nothing on chain could authorise one
+ *      for them. A rezipped note therefore leaves the pool only through an ASP-approved withdrawal. If the ASP (the
+ *      POSTMAN key) or the Entrypoint OWNER censors it, it is frozen. Senders who can't accept that send to an address.
+ *
+ *      A deposit never pays the Entrypoint's vetting fee: if the OWNER ever sets one, rezips revert rather than hand
+ *      the OWNER a share of the value (R2-M3).
  */
 contract ZipRezip is ZipProcessooor {
   using SafeERC20 for IERC20;
@@ -69,11 +77,9 @@ contract ZipRezip is ZipProcessooor {
   function _deposit(address _sender, uint256 _value, uint256 _fee, uint256 _precommitment, bytes memory _ciphertext)
     internal
   {
-    ZC.forceApprove(address(ENTRYPOINT), _value);
-    uint256 _commitment = ENTRYPOINT.deposit(ZC, _value, _precommitment);
-    uint256 _label = uint256(keccak256(abi.encodePacked(SCOPE, POOL.nonce()))) % Constants.SNARK_SCALAR_FIELD;
-    // The note holds what is left after the Entrypoint's vetting fee (zero in our deployment), same formula as it uses
-    (,, uint256 _vettingFeeBPS,) = ENTRYPOINT.assetConfig(ZC);
-    emit Rezipped(_sender, _commitment, _label, _value - (_value * _vettingFeeBPS) / 10_000, _fee, _ciphertext);
+    // Reverts VettingFeeCharged if the Entrypoint would keep a fee (R2-M3), so the note always holds the full value.
+    // The label comes from the pool the Entrypoint actually deposited into (I-6), not the construction-time one.
+    (uint256 _commitment, uint256 _label) = DeferredPayout.depositFeeFree(ENTRYPOINT, ZC, _value, _precommitment);
+    emit Rezipped(_sender, _commitment, _label, _value, _fee, _ciphertext);
   }
 }

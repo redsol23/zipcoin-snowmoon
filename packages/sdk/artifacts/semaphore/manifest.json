@@ -1,0 +1,43 @@
+{
+  "project": "semaphore",
+  "version": "4.13.0",
+  "source": "https://snark-artifacts.pse.dev/semaphore/4.13.0",
+  "depths": [
+    1,
+    16
+  ],
+  "files": {
+    "semaphore-1.wasm": "sha256:70289ef3bdfa86e97debdb227e76721b392f45b5e73d5e7136d93a04dce0dff9",
+    "semaphore-1.zkey": "sha256:471a978875f91411b21ba5a2fbea41df30ec45eb23e3ac045edf7f30a2846a08",
+    "semaphore-2.wasm": "sha256:877a989a8881ff6651866cfa32088f60e4abcb02a26f2e995868dfabd7f9385b",
+    "semaphore-2.zkey": "sha256:110e2d9de78730aa4f5c78c75017cfe4d769b4b7ce60f58484fb14733d7b0f35",
+    "semaphore-3.wasm": "sha256:48e15502f710be0a623d573d472edeeaf918fd5eee0b2ca9b407c4e4f20d12f2",
+    "semaphore-3.zkey": "sha256:c36653c42784df35a01f3d93415af9ad8292a540f8deb134a6a34a01752a89d3",
+    "semaphore-4.wasm": "sha256:ec0ed0ae7eb0264070b36a247cf4aad8157c5550f0731d3462019526e5e9ae4f",
+    "semaphore-4.zkey": "sha256:90c94bad7ad97eeb9314750e443d84da783e38a21f55538d72b10d258064f6e6",
+    "semaphore-5.wasm": "sha256:74ee373fc66bf81ca89de52602b555f16ef0e54c0e36e5b69c6e109d146acfb5",
+    "semaphore-5.zkey": "sha256:a1431c24dc49e98d07d48e7bdacc002875bcb02a799d9156c6aa6bcbe0838926",
+    "semaphore-6.wasm": "sha256:432293aa5c8e7d503148824ff17a8ad7318058a656af568837f30675d867827e",
+    "semaphore-6.zkey": "sha256:24a7ef2c7f4c809a502e876cb3295535a73710ec7bc3827b5a15018e434a674a",
+    "semaphore-7.wasm": "sha256:3ba75768d5dfbee9d52b732b69eefb1725c8c356a3de9c2f2a71dbc401a0ea61",
+    "semaphore-7.zkey": "sha256:d77851ee4bd496c6b5f70fbfa550f113a89bad972efd4c541267e566163d0600",
+    "semaphore-8.wasm": "sha256:4edc07444a1d48d09014c963e315d3351b6e12838d83fcb1962071614b1c94b9",
+    "semaphore-8.zkey": "sha256:d02521afe7133a97421244374d4bc005c1ebd7d7cf7c51e88b7e99fdaf183146",
+    "semaphore-9.wasm": "sha256:a75f9d92dc826629e3490596ec99055bbecc006050dee6bf8e81b99c9a54f16a",
+    "semaphore-9.zkey": "sha256:0eae4df76414b885a2f0793740330de896ab13f07504f97c81b5fe92868ce90e",
+    "semaphore-10.wasm": "sha256:1e9e1e3ad9917164bc96c751e32fae724400b92063f5a2cfd22ca64674bf4f96",
+    "semaphore-10.zkey": "sha256:f644af6753be9d48454d8f9bb74bf2e9a416dd7d1a704c3cf1d50e535969a19a",
+    "semaphore-11.wasm": "sha256:8261bedcadf797674ebf89fa3ed09e4cd37747bb77c8b21379f9d7c582ed8189",
+    "semaphore-11.zkey": "sha256:04d46b1be01a5ff56129318e64f3ec2c833277674a6cb787ca562893de2ec49d",
+    "semaphore-12.wasm": "sha256:3b7c0b34b00e5c87946d6e1689c05ce75f2dd93618ceb803dd369ff6ad65876e",
+    "semaphore-12.zkey": "sha256:3beb3d676455cca9c7c66f34a6147f8ba213b1db1812e2c1be2c00f129477229",
+    "semaphore-13.wasm": "sha256:517a55315564fc1622aee17df0ec4579aacf7f2c21753887016f728c9ce1596c",
+    "semaphore-13.zkey": "sha256:54378ba8d31fff7c89857228cb9dc089e837f6c8b256ab0a1b8c8cdbdcf815f9",
+    "semaphore-14.wasm": "sha256:7a525e7c179b16731de40f902563200480dce98d7015ddda634de5da344b9f6b",
+    "semaphore-14.zkey": "sha256:2e85d8f4a841bc0d1e223316082d3f64c855ff52083a53278dae92f49b54ff9e",
+    "semaphore-15.wasm": "sha256:d6c588754c6f1af9555cb14bbf01091116c7dbc605adc3cedd4ed644a5800c60",
+    "semaphore-15.zkey": "sha256:076f4d7e6e2484f4cd19226b5ef622f36f6de7a99e44570e4b29c9d4fb0dfca0",
+    "semaphore-16.wasm": "sha256:06df31461d17db86897fc234f0e6e5f5e2f6add1b8c821b5c6ae75030b3e0d7c",
+    "semaphore-16.zkey": "sha256:948763c7315a337b7722c0344a28af4be66fbbc618474d6dbe9036e799d1a3b5"
+  }
+}

@@ -13,6 +13,15 @@ cbor_metadata = false
 ffi = true
 fs_permissions = [{ access = "read-write", path = "./deployments/" }, { access = "read", path = "./test/fixtures/" }]
 
+# Deeper runs of the privacy pool suite (test/zipnet/pool): FOUNDRY_PROFILE=pooldeep forge test --match-path ...
+[profile.pooldeep.fuzz]
+runs = 2000
+
+[profile.pooldeep.invariant]
+runs = 1000
+depth = 200
+fail_on_revert = true
+
 [fmt]
 line_length = 120
 tab_width = 2

@@ -1,0 +1,53 @@
+# Cloudflare Tunnel (locally managed) for the one-box deployment. Copy to $ZIPNET_ROOT/config/cloudflared.yml.
+#
+# Create the tunnel once, from any machine with cloudflared logged in to the zone's account:
+#   cloudflared tunnel login
+#   cloudflared tunnel create zipnet                 # prints the tunnel UUID, writes <UUID>.json credentials
+#   cloudflared tunnel route dns zipnet app.zipcoin.org       # repeat for every hostname below
+# Copy the credentials JSON to $ZIPNET_ROOT/secrets/cloudflared_credentials.json (mode 600) and put the UUID below.
+# The container reads it as a Docker secret at /run/secrets/cloudflared_credentials.
+#
+# Every service is addressed by its compose service name on the internal network; nothing listens on the host.
+# Hostnames, who may reach them, and the header notes: deploy/cloudflared/ROUTES.md.
+
+tunnel: <TUNNEL_UUID>
+credentials-file: /run/secrets/cloudflared_credentials
+no-autoupdate: true
+# Metrics stay inside the container network (no port is published)
+metrics: 0.0.0.0:2000
+
+originRequest:
+  connectTimeout: 10s
+  keepAliveTimeout: 90s
+  # The visitor's Host header is passed through unchanged
+
+ingress:
+  # Web app: through the edge proxy, which sets its framing/CSP headers
+  - hostname: app.zipcoin.org
+    service: http://edge:8080
+
+  # Stats API behind zipcoin.org's Ledger, Privacy meter and Status pages
+  - hostname: api.zipcoin.org
+    service: http://stats:8750
+
+  # Veridia feed (/feed, /cast): public, read-only
+  - hostname: veridia.zipcoin.org
+    service: http://veridia:8730
+
+  # Postman: /asp (the approved label set, read by every wallet and every courier, including other operators') and
+  # /health. Public by design; it has no admin routes today (see ROUTES.md)
+  - hostname: postman.zipcoin.org
+    service: http://postman:8710
+
+  # Couriers: public (wallets post proofs, stats probes /health). One entry per courier.
+  - hostname: courier1.zipcoin.org
+    service: http://courier1:8720
+  # - hostname: courier2.zipcoin.org
+  #   service: http://courier2:8720
+
+  # The Mountain Archive, the x402 demo merchant
+  - hostname: archive.zipcoin.org
+    service: http://archive:8740
+
+  # Anything else
+  - service: http_status:404

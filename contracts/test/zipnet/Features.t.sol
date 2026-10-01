@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.28;
 
+import {Semaphore} from '@semaphore-protocol/contracts/Semaphore.sol';
 import {Vm} from 'forge-std/Vm.sol';
 
 import {ProofLib} from 'contracts/lib/ProofLib.sol';
@@ -34,7 +35,8 @@ contract FeaturesTest is ZipnetBase {
     rezip = new ZipRezip(IPrivacyPool(address(pool)));
     merchants = new ZipMerchants(zc, 1000 ether);
     // 1% tax: 50% burned, 30% couriers, 20% treasury
-    zipPay = new ZipPay(IPrivacyPool(address(pool)), merchants, 100, 5000, 3000, courierPool, treasury, semaphore);
+    zipPay =
+      new ZipPay(IPrivacyPool(address(pool)), merchants, 100, 5000, 3000, courierPool, treasury, semaphore, 10 ether);
   }
 
   function _courier(uint256 _fee) internal view returns (ZipProcessooor.Courier memory) {
@@ -193,6 +195,29 @@ contract FeaturesTest is ZipnetBase {
     assertEq(zc.balanceOf(address(pool)), 100 ether);
   }
 
+  // M-2 PoC, inverted: a zero-base (or tiny) payment can't add identities to a merchant's payer group
+  function test_m2_payerGroupNeedsARealPurchase() public {
+    uint256 _id = _listMerchant(makeAddr('restaurant'), makeAddr('restaurant'));
+    address _attacker = makeAddr('attacker'); // holds no ZC
+    vm.startPrank(_attacker);
+    vm.expectRevert(ZipPay.BaseTooSmallToJoin.selector);
+    zipPay.pay(_id, 0, bytes32(uint256(1)), 0, 1001, '');
+    vm.stopPrank();
+    assertFalse(zipPay.hasPayerGroup(_id));
+
+    address _buyer = makeAddr('buyer');
+    zc.mint(_buyer, 20 ether);
+    vm.startPrank(_buyer);
+    zc.approve(address(zipPay), 20 ether);
+    vm.expectRevert(ZipPay.BaseTooSmallToJoin.selector);
+    zipPay.pay(_id, 9 ether, bytes32(0), 0, 1002, ''); // below MIN_JOIN_BASE (10)
+    zipPay.pay(_id, 1 ether, bytes32(0), 0, 0, ''); // a small purchase without joining is fine
+    zipPay.pay(_id, 10 ether, bytes32(0), 0, 1003, '');
+    vm.stopPrank();
+    assertTrue(Semaphore(address(semaphore)).hasMember(zipPay.payerGroup(_id), 1003));
+    assertEq(Semaphore(address(semaphore)).getMerkleTreeSize(zipPay.payerGroup(_id)), 1);
+  }
+
   // ---------------------------------------------------------------------------------------------------------------
   // random inspection
   // ---------------------------------------------------------------------------------------------------------------
@@ -205,8 +230,30 @@ contract FeaturesTest is ZipnetBase {
     (uint8 _v, bytes32 _r, bytes32 _s) = vm.sign(_key, merchants.invoiceDigest(_inv));
 
     address _inspector = makeAddr('inspector');
+    bytes memory _sig = abi.encodePacked(_r, _s, _v);
+    bytes32 _salt = keccak256('inspector salt');
+
+    // the report must be committed a block earlier
     vm.prank(_inspector);
-    merchants.report(_inv, abi.encodePacked(_r, _s, _v));
+    vm.expectRevert(ZipMerchants.NotCommitted.selector);
+    merchants.report(_inv, _sig, _salt);
+    vm.prank(_inspector);
+    merchants.commitReport(merchants.reportCommitment(merchants.invoiceDigest(_inv), _inspector, _salt));
+    vm.prank(_inspector);
+    vm.expectRevert(ZipMerchants.NotCommitted.selector);
+    merchants.report(_inv, _sig, _salt); // same block
+    vm.roll(block.number + 1);
+
+    // M-8: a mempool watcher (or the merchant itself) copying the reveal has no commitment of its own
+    vm.prank(makeAddr('copier'));
+    vm.expectRevert(ZipMerchants.NotCommitted.selector);
+    merchants.report(_inv, _sig, _salt);
+    vm.prank(_signer);
+    vm.expectRevert(ZipMerchants.NotCommitted.selector);
+    merchants.report(_inv, _sig, _salt);
+
+    vm.prank(_inspector);
+    merchants.report(_inv, _sig, _salt);
 
     assertEq(zc.balanceOf(_inspector), 500 ether);
     assertEq(zc.balanceOf(BURN), 500 ether);
@@ -221,7 +268,7 @@ contract FeaturesTest is ZipnetBase {
     (uint8 _v, bytes32 _r, bytes32 _s) = vm.sign(_key, merchants.invoiceDigest(_inv));
 
     vm.expectRevert(ZipMerchants.NotEvidence.selector);
-    merchants.report(_inv, abi.encodePacked(_r, _s, _v));
+    merchants.report(_inv, abi.encodePacked(_r, _s, _v), 0);
   }
 
   function test_merchantExitWaitsForInspectionWindow() public {

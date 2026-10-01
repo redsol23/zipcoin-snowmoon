@@ -1,0 +1,11 @@
+# The zipnet user's crontab (install with: crontab deploy/ops/crontab.example, as the zipnet user). Times are UTC.
+SHELL=/bin/bash
+PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+ZIPNET_ROOT=/srv/zipnet
+
+# Encrypted backup of state, keys and config, keep 14
+15 3 * * * /srv/zipnet/src/deploy/backup.sh >> /var/log/zipnet/backup.log 2>&1
+
+# Deep health check every 5 minutes; alerts via ALERT_WEBHOOK_URL in /srv/zipnet/config/healthcheck.env
+*/5 * * * * /srv/zipnet/src/deploy/ops/healthcheck.sh >> /var/log/zipnet/healthcheck.log 2>&1
+

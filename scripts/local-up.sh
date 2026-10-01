@@ -20,9 +20,13 @@ KEY="$(cat "$ROOT/.local/dev.key")"
 ADDR="$(cast wallet address --private-key "$KEY")"
 cast rpc anvil_setBalance "$ADDR" 0x3635C9ADC5DEA00000 --rpc-url "$RPC" >/dev/null
 
+# Pinned Semaphore proving artifacts (hash-checked); a no-op once present
+( cd "$ROOT" && node scripts/fetch-semaphore-artifacts.mjs )
+
+mkdir -p "$ROOT/contracts/deployments"
 cd "$ROOT/contracts"
-PRIVATE_KEY="$KEY" DEPLOYMENT=local forge script script/Deploy.s.sol:Deploy \
-  --rpc-url "$RPC" --broadcast --private-key "$KEY" --sender "$ADDR" | grep -E "wrote|ONCHAIN"
+PRIVATE_KEY="$KEY" DEPLOYMENT=local forge script script/Deploy.s.sol:Deploy --slow \
+  --rpc-url "$RPC" --broadcast --slow --private-key "$KEY" --sender "$ADDR" | grep -E "wrote|ONCHAIN"
 
 cat > "$ROOT/.local/dev.env" <<ENV
 RPC_URL=$RPC

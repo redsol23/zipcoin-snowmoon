@@ -1,7 +1,7 @@
 #!/usr/bin/env sh
 # Before anything leaves this machine: re-scan every outgoing commit, then typecheck and run the contract tests.
 set -e
-node scripts/guard.mjs remote
+node scripts/guard.mjs remote "$1" "$2"
 z=0000000000000000000000000000000000000000
 while read -r local_ref local_sha remote_ref remote_sha; do
   [ "$local_sha" = "$z" ] && continue
@@ -13,5 +13,7 @@ for p in packages/* apps/*; do
   node packages/sdk/node_modules/typescript/bin/tsc --noEmit -p "$p"
 done
 echo "guard: typecheck ok"
-(cd contracts && PATH="$HOME/.foundry/bin:$PATH" forge test -q)
+(cd contracts && PATH="$HOME/.foundry/bin:$PATH" forge build --sizes --skip test --skip script > /dev/null) || { echo "guard: a contract exceeds the 24 KB EIP-170 size limit (run: cd contracts && forge build --sizes)"; exit 1; }
+echo "guard: contract sizes ok"
+(cd contracts && PATH="$HOME/.foundry/bin:$PATH" forge test -q --threads "${FORGE_THREADS:-2}")
 echo "guard: forge tests ok"

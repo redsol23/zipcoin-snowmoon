@@ -1,0 +1,337 @@
+# zipnet on one box: every service behind a Cloudflare Tunnel, no published ports.
+#
+#   cd /srv/zipnet/src/deploy/compose
+#   cp .env.example .env            # then edit: domain, image tag, profiles
+#   docker compose build            # or: ZIPNET_TAG=<sha> docker compose build (see deploy/README.md)
+#   docker compose up -d
+#
+# Layout on the host (created by deploy/bootstrap.sh; ZIPNET_ROOT defaults to /srv/zipnet):
+#   $ZIPNET_ROOT/env/*.env          per-service settings, mode 600 (templates: deploy/compose/env/*.env.example)
+#   $ZIPNET_ROOT/secrets/*          one secret per file, mode 600: keys, mnemonics, API keys, tunnel credentials
+#   $ZIPNET_ROOT/deployments/       contracts/deployments/<name>.json, mounted read-only at /deployments
+#   $ZIPNET_ROOT/config/            optional read-only files: denylist.txt, stats-exclude.txt
+#   $ZIPNET_ROOT/data/<service>/    persistent state (postman state, courier jobs, Veridia, web stores)
+#
+# Secrets are Docker secrets: the file is mounted at /run/secrets/<name> and docker/entrypoint.sh exports it as the
+# variable the app reads (NAME__FILE -> NAME). Nothing secret is in an image, in this file, or in `docker inspect`.
+#
+# Sizing (limits; see deploy/README.md): about 3.5 GB of limits with one courier, for a 4-8 GB box.
+
+name: zipnet
+
+x-logging: &logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "5"
+
+# Shared by every Node service
+x-node: &node
+  restart: unless-stopped
+  init: true
+  read_only: true
+  tmpfs:
+    - /tmp:size=64m,mode=1777
+  user: "${ZIPNET_UID:-1000}:${ZIPNET_GID:-1000}"
+  security_opt:
+    - no-new-privileges:true
+  cap_drop:
+    - ALL
+  logging: *logging
+  networks:
+    - zipnet
+  healthcheck: &health
+    interval: 30s
+    timeout: 10s
+    retries: 3
+    start_period: 120s
+
+x-deployments: &deployments "${ZIPNET_ROOT:-/srv/zipnet}/deployments:/deployments:ro"
+x-config: &config "${ZIPNET_ROOT:-/srv/zipnet}/config:/etc/zipnet:ro"
+
+services:
+  # -------------------------------------------------------------------------------------------------------------------
+  # Postman: the Association Set Provider. One hot key (roots only). State: the ordered approved-label list.
+  postman:
+    <<: *node
+    image: zipnet/postman:${ZIPNET_TAG:?set ZIPNET_TAG (the git SHA) in .env}
+    build:
+      context: ../..
+      dockerfile: docker/node-service.Dockerfile
+      args: { APP: postman, GIT_SHA: "${ZIPNET_TAG}" }
+    env_file:
+      - ${ZIPNET_ROOT:-/srv/zipnet}/env/common.env
+      - ${ZIPNET_ROOT:-/srv/zipnet}/env/postman.env
+    environment:
+      DEPLOYMENT: /deployments/${DEPLOYMENT_FILE:-mainnet.json}
+      STATE_FILE: /var/lib/zipnet/postman.json
+      PORT: "8710"
+      POSTMAN_KEY__FILE: /run/secrets/postman_key
+      NODE_OPTIONS: --max-old-space-size=192
+    secrets: [postman_key]
+    volumes:
+      - ${ZIPNET_ROOT:-/srv/zipnet}/data/postman:/var/lib/zipnet
+      - *deployments
+      - *config
+    healthcheck:
+      <<: *health
+      test: ["CMD", "node", "/usr/local/lib/zipnet/healthcheck.mjs", "http://127.0.0.1:8710/health"]
+    deploy:
+      resources:
+        limits: { cpus: "0.50", memory: 256M }
+
+  # -------------------------------------------------------------------------------------------------------------------
+  # Courier 1. More couriers: copy deploy/compose/couriers.override.example.yml (one block per courier, each with its
+  # own key, env file, data dir and hostname) and add its route to the tunnel config.
+  courier1:
+    <<: *node
+    image: zipnet/courier:${ZIPNET_TAG}
+    build:
+      context: ../..
+      dockerfile: docker/node-service.Dockerfile
+      args: { APP: courier, GIT_SHA: "${ZIPNET_TAG}" }
+    env_file:
+      - ${ZIPNET_ROOT:-/srv/zipnet}/env/common.env
+      - ${ZIPNET_ROOT:-/srv/zipnet}/env/courier1.env
+    environment:
+      DEPLOYMENT: /deployments/${DEPLOYMENT_FILE:-mainnet.json}
+      DATA_DIR: /var/lib/zipnet
+      PORT: "8720"
+      POSTMAN_URL: http://postman:8710
+      PUBLIC_URL: https://courier1.${ZIPNET_DOMAIN:-zipcoin.org}
+      COURIER_KEY__FILE: /run/secrets/courier1_key
+      COVER_MNEMONIC__FILE: /run/secrets/courier1_cover_mnemonic
+      NODE_OPTIONS: --max-old-space-size=384
+    secrets: [courier1_key, courier1_cover_mnemonic]
+    volumes:
+      - ${ZIPNET_ROOT:-/srv/zipnet}/data/courier1:/var/lib/zipnet
+      - *deployments
+    depends_on:
+      postman: { condition: service_healthy }
+    healthcheck:
+      <<: *health
+      test: ["CMD", "node", "/usr/local/lib/zipnet/healthcheck.mjs", "http://127.0.0.1:8720/health"]
+    deploy:
+      resources:
+        limits: { cpus: "1.00", memory: 512M }
+
+  # -------------------------------------------------------------------------------------------------------------------
+  # Veridia: the Snowmoon residents (cover traffic). Optional at launch: COMPOSE_PROFILES=veridia.
+  veridia:
+    <<: *node
+    profiles: [veridia]
+    image: zipnet/veridia:${ZIPNET_TAG}
+    build:
+      context: ../..
+      dockerfile: docker/node-service.Dockerfile
+      args: { APP: veridia, GIT_SHA: "${ZIPNET_TAG}", SEMAPHORE_ARTIFACTS: "1" }
+    env_file:
+      - ${ZIPNET_ROOT:-/srv/zipnet}/env/common.env
+      - ${ZIPNET_ROOT:-/srv/zipnet}/env/veridia.env
+    environment:
+      DEPLOYMENT: /deployments/${DEPLOYMENT_FILE:-mainnet.json}
+      DATA_DIR: /var/lib/zipnet
+      PORT: "8730"
+      COURIER_URL: http://courier1:8720
+      TREASURY_KEY__FILE: /run/secrets/veridia_key
+      DEEPSEEK_API_KEY__FILE: /run/secrets/deepseek_api_key
+      NODE_OPTIONS: --max-old-space-size=640
+    secrets: [veridia_key, deepseek_api_key]
+    volumes:
+      - ${ZIPNET_ROOT:-/srv/zipnet}/data/veridia:/var/lib/zipnet
+      - *deployments
+    depends_on:
+      courier1: { condition: service_healthy }
+    healthcheck:
+      <<: *health
+      # Veridia has no /health; /cast is static and answers as soon as the feed server is up
+      test: ["CMD", "node", "/usr/local/lib/zipnet/healthcheck.mjs", "http://127.0.0.1:8730/cast"]
+    deploy:
+      resources:
+        limits: { cpus: "1.00", memory: 768M }
+
+  # -------------------------------------------------------------------------------------------------------------------
+  # Stats API (api.<domain>): read-only, no key. Keeps its cache in memory and rebuilds it from deployBlock on start.
+  stats:
+    <<: *node
+    image: zipnet/stats:${ZIPNET_TAG}
+    build:
+      context: ../..
+      dockerfile: docker/node-service.Dockerfile
+      args: { APP: stats, GIT_SHA: "${ZIPNET_TAG}" }
+    env_file:
+      - ${ZIPNET_ROOT:-/srv/zipnet}/env/common.env
+      - ${ZIPNET_ROOT:-/srv/zipnet}/env/stats.env
+    environment:
+      DEPLOYMENT: /deployments/${DEPLOYMENT_FILE:-mainnet.json}
+      HOST: 0.0.0.0
+      PORT: "8750"
+      POSTMAN_URL: http://postman:8710
+      # cloudflared appends the visitor's address as the last X-Forwarded-For hop
+      TRUST_PROXY: "1"
+      NODE_OPTIONS: --max-old-space-size=288
+    volumes:
+      - *deployments
+      - *config
+    healthcheck:
+      <<: *health
+      start_period: 300s
+      test: ["CMD", "node", "/usr/local/lib/zipnet/healthcheck.mjs", "http://127.0.0.1:8750/health"]
+    deploy:
+      resources:
+        limits: { cpus: "0.50", memory: 384M }
+
+  # -------------------------------------------------------------------------------------------------------------------
+  # Web app: wallet + Emerald. Reached only through `edge`, which sets its framing headers.
+  web:
+    <<: *node
+    image: zipnet/web:${ZIPNET_TAG}
+    build:
+      context: ../..
+      dockerfile: docker/web.Dockerfile
+      args: { GIT_SHA: "${ZIPNET_TAG}" }
+    tmpfs:
+      - /tmp:size=64m,mode=1777
+      - /repo/apps/web/.next/cache:size=256m,uid=${ZIPNET_UID:-1000},gid=${ZIPNET_GID:-1000}
+    env_file:
+      - ${ZIPNET_ROOT:-/srv/zipnet}/env/common.env
+      - ${ZIPNET_ROOT:-/srv/zipnet}/env/web.env
+    environment:
+      DEPLOYMENT: /deployments/${DEPLOYMENT_FILE:-mainnet.json}
+      COURIER_URL: http://courier1:8720
+      POSTMAN_URL: http://postman:8710
+      VERIDIA_URL: http://veridia:8730
+      PUBLIC_COURIER_URL: https://courier1.${ZIPNET_DOMAIN:-zipcoin.org}
+      DEEPSEEK_API_KEY__FILE: /run/secrets/deepseek_api_key
+      EMERALD_SESSION_SECRET__FILE: /run/secrets/emerald_session_secret
+      NODE_OPTIONS: --max-old-space-size=768
+    secrets: [deepseek_api_key, emerald_session_secret]
+    volumes:
+      - ${ZIPNET_ROOT:-/srv/zipnet}/data/web:/var/lib/zipnet
+      - *deployments
+      - *config
+    healthcheck:
+      <<: *health
+      # 503 until DEPLOYMENT points at a real file, so a missing deployment shows as unhealthy
+      test: ["CMD", "node", "/usr/local/lib/zipnet/healthcheck.mjs", "http://127.0.0.1:3100/api/config"]
+    deploy:
+      resources:
+        limits: { cpus: "1.50", memory: 1G }
+
+  # -------------------------------------------------------------------------------------------------------------------
+  # The Mountain Archive: the x402 demo merchant (archive.<domain>). Optional: COMPOSE_PROFILES=archive.
+  archive:
+    <<: *node
+    profiles: [archive]
+    image: zipnet/archive:${ZIPNET_TAG}
+    build:
+      context: ../..
+      dockerfile: docker/node-service.Dockerfile
+      args: { APP: archive, GIT_SHA: "${ZIPNET_TAG}" }
+    env_file:
+      - ${ZIPNET_ROOT:-/srv/zipnet}/env/common.env
+      - ${ZIPNET_ROOT:-/srv/zipnet}/env/archive.env
+    environment:
+      DEPLOYMENT: /deployments/${DEPLOYMENT_FILE:-mainnet.json}
+      DATA_DIR: /var/lib/zipnet
+      PORT: "8740"
+      COURIER_URL: http://courier1:8720
+      ARCHIVE_KEY__FILE: /run/secrets/archive_key
+      NODE_OPTIONS: --max-old-space-size=192
+    secrets: [archive_key]
+    volumes:
+      - ${ZIPNET_ROOT:-/srv/zipnet}/data/archive:/var/lib/zipnet
+      - *deployments
+    healthcheck:
+      <<: *health
+      test: ["CMD", "node", "/usr/local/lib/zipnet/healthcheck.mjs", "http://127.0.0.1:8740/"]
+    deploy:
+      resources:
+        limits: { cpus: "0.25", memory: 256M }
+
+  # -------------------------------------------------------------------------------------------------------------------
+  # Edge: a tiny Caddy in front of the web app only. Adds the framing headers (the app is never framed), blocks
+  # internal routes, keeps no access log. TLS is Cloudflare's; this listens on plain HTTP inside the
+  # compose network and publishes no port.
+  edge:
+    image: ${CADDY_IMAGE:-caddy:2.8.4-alpine}
+    restart: unless-stopped
+    read_only: true
+    user: "${ZIPNET_UID:-1000}:${ZIPNET_GID:-1000}"
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    # The caddy binary carries the cap_net_bind_service file capability; without it in the bounding set exec fails
+    # with "operation not permitted" (checked). It only listens on 8080/8081, but the binary needs it to start.
+    cap_add:
+      - NET_BIND_SERVICE
+    tmpfs:
+      - /data:size=8m,uid=${ZIPNET_UID:-1000},gid=${ZIPNET_GID:-1000}
+      - /config:size=8m,uid=${ZIPNET_UID:-1000},gid=${ZIPNET_GID:-1000}
+    environment:
+      ZIPNET_DOMAIN: ${ZIPNET_DOMAIN:-zipcoin.org}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+    depends_on:
+      web: { condition: service_started }
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:8081/healthz"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    logging: *logging
+    networks:
+      - zipnet
+    deploy:
+      resources:
+        limits: { cpus: "0.50", memory: 128M }
+
+  # -------------------------------------------------------------------------------------------------------------------
+  # Cloudflare Tunnel: the only way in. Outbound connections to Cloudflare; no inbound port on the host.
+  cloudflared:
+    image: cloudflare/cloudflared:${CLOUDFLARED_VERSION:?pin CLOUDFLARED_VERSION in .env}
+    restart: unless-stopped
+    read_only: true
+    user: "${ZIPNET_UID:-1000}:${ZIPNET_GID:-1000}"
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    command: ["tunnel", "--no-autoupdate", "--config", "/etc/cloudflared/config.yml", "run"]
+    volumes:
+      - ${ZIPNET_ROOT:-/srv/zipnet}/config/cloudflared.yml:/etc/cloudflared/config.yml:ro
+    # config.yml names credentials-file: /run/secrets/cloudflared_credentials
+    secrets: [cloudflared_credentials]
+    depends_on:
+      edge: { condition: service_started }
+    logging: *logging
+    networks:
+      - zipnet
+    deploy:
+      resources:
+        limits: { cpus: "0.50", memory: 128M }
+
+networks:
+  zipnet:
+    driver: bridge
+
+# One file per secret under $ZIPNET_ROOT/secrets (mode 600, owned by the zipnet user). Unused optional ones (e.g.
+# deepseek_api_key before Emerald is on) must still exist, empty: deploy/bootstrap.sh creates them.
+secrets:
+  postman_key:
+    file: ${ZIPNET_ROOT:-/srv/zipnet}/secrets/postman_key
+  courier1_key:
+    file: ${ZIPNET_ROOT:-/srv/zipnet}/secrets/courier1_key
+  courier1_cover_mnemonic:
+    file: ${ZIPNET_ROOT:-/srv/zipnet}/secrets/courier1_cover_mnemonic
+  veridia_key:
+    file: ${ZIPNET_ROOT:-/srv/zipnet}/secrets/veridia_key
+  archive_key:
+    file: ${ZIPNET_ROOT:-/srv/zipnet}/secrets/archive_key
+  deepseek_api_key:
+    file: ${ZIPNET_ROOT:-/srv/zipnet}/secrets/deepseek_api_key
+  emerald_session_secret:
+    file: ${ZIPNET_ROOT:-/srv/zipnet}/secrets/emerald_session_secret
+  cloudflared_credentials:
+    file: ${ZIPNET_ROOT:-/srv/zipnet}/secrets/cloudflared_credentials.json

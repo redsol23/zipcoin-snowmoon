@@ -1,4 +1,4 @@
-// The Veridia residents' public directory, for the wallet (Emerald uses it to recognize who an address belongs to).
+// The Veridia residents' public directory: names, cities, bios and shops. It lists no wallets or zip addresses.
 import { services } from "@/lib/veridia";
 
 export const dynamic = "force-dynamic";

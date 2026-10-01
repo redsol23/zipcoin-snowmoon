@@ -1,0 +1,48 @@
+/*
+  Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self'; font-src 'self'; connect-src https://api.zipcoin.org; manifest-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'; frame-src 'none'; frame-ancestors 'none'; upgrade-insecure-requests
+  Strict-Transport-Security: max-age=63072000; includeSubDomains; preload
+  X-Content-Type-Options: nosniff
+  X-Frame-Options: DENY
+  Referrer-Policy: no-referrer
+  Permissions-Policy: accelerometer=(), autoplay=(), browsing-topics=(), camera=(), clipboard-read=(), clipboard-write=(self), display-capture=(), encrypted-media=(), fullscreen=(), geolocation=(), gyroscope=(), hid=(), idle-detection=(), magnetometer=(), microphone=(), midi=(), payment=(), picture-in-picture=(), publickey-credentials-get=(), screen-wake-lock=(), serial=(), sync-xhr=(), usb=(), xr-spatial-tracking=()
+  Cross-Origin-Opener-Policy: same-origin
+  X-Permitted-Cross-Domain-Policies: none
+
+/fonts/*
+  Cache-Control: public, max-age=604800, stale-while-revalidate=86400
+
+/img/*
+  Cache-Control: public, max-age=604800, stale-while-revalidate=86400
+
+/og/*
+  Cache-Control: public, max-age=86400
+
+/favicon*
+  Cache-Control: public, max-age=86400
+
+/apple-touch-icon.png
+  Cache-Control: public, max-age=86400
+
+/
+  Cache-Control: public, max-age=0, must-revalidate
+
+/learn/*
+  Cache-Control: public, max-age=0, must-revalidate
+
+/ledger/*
+  Cache-Control: public, max-age=0, must-revalidate
+
+/privacy-meter/*
+  Cache-Control: public, max-age=0, must-revalidate
+
+/status/*
+  Cache-Control: public, max-age=0, must-revalidate
+
+/*.css
+  Cache-Control: public, max-age=3600, must-revalidate
+
+/*.js
+  Cache-Control: public, max-age=3600, must-revalidate
+
+/.well-known/security.txt
+  Content-Type: text/plain; charset=utf-8

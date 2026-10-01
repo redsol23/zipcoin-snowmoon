@@ -8,6 +8,7 @@ cache/
 dist/
 broadcast/
 contracts/deployments/*-local.json
+contracts/deployments/*-local-owners.json
 .local/
 contracts/deployments/local.json
 .courier/
@@ -16,3 +17,5 @@ contracts/deployments/local.json
 next-env.d.ts
 *.tsbuildinfo
 apps/web/public/artifacts/
+packages/sdk/artifacts/semaphore/*.wasm
+packages/sdk/artifacts/semaphore/*.zkey

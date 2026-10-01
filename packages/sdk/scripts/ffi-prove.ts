@@ -9,10 +9,10 @@
  *
  * Leaves are `abi.encode(uint256[])`. snarkjs logs to stdout, so it is silenced while proving.
  */
-import { generateProof, Group, Identity } from "@semaphore-protocol/core";
+import { Identity } from "@semaphore-protocol/core";
 import { decodeAbiParameters, encodeAbiParameters, type Hex } from "viem";
 
-import { buildTree, hashCommitment, hashPrecommitment, proveExit, proveLeaf, proveSpend } from "../src/index";
+import { buildTree, hashCommitment, hashPrecommitment, proveExit, proveLeaf, proveMembership, proveSpend } from "../src/index";
 
 const write = process.stdout.write.bind(process.stdout);
 const silent = async <T>(fn: () => Promise<T>) => {
@@ -62,7 +62,8 @@ async function main() {
   } else if (mode === "identity") {
     write(encodeAbiParameters([{ type: "uint256" }], [new Identity(a[0]).commitment]));
   } else if (mode === "semaphore") {
-    const p = await silent(() => generateProof(new Identity(a[0]), new Group(leaves(a[1])), BigInt(a[2]), BigInt(a[3])));
+    // Same path the wallet and Veridia use: the self-hosted, hash-pinned artifacts
+    const p = await silent(() => proveMembership(new Identity(a[0]), leaves(a[1]), BigInt(a[2]), BigInt(a[3])));
     write(
       encodeAbiParameters(
         [

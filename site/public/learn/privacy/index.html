@@ -1,0 +1,177 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Privacy: zipcoin</title>
+<meta name="description" content="How a shared pool and a zero-knowledge proof keep who paid private, and where the limits are.">
+<link rel="canonical" href="https://zipcoin.org/learn/privacy/">
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#ECF0EC" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#101B1A" media="(prefers-color-scheme: dark)">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/favicon-32.png" type="image/png" sizes="32x32">
+<link rel="manifest" href="/site.webmanifest">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="preload" href="/fonts/newsreader-display.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/fonts/newsreader-text.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="/styles.css">
+<script src="/main.js" defer></script>
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="zipcoin">
+<meta property="og:url" content="https://zipcoin.org/learn/privacy/">
+<meta property="og:title" content="Privacy">
+<meta property="og:description" content="How a shared pool and a zero-knowledge proof keep who paid private, and where the limits are.">
+<meta property="og:image" content="https://zipcoin.org/og/learn-privacy.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Privacy: How a shared pool and a zero-knowledge proof keep who paid private, and where the limits are.">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Privacy">
+<meta name="twitter:description" content="How a shared pool and a zero-knowledge proof keep who paid private, and where the limits are.">
+<meta name="twitter:image" content="https://zipcoin.org/og/learn-privacy.png">
+<meta name="twitter:image:alt" content="Privacy: How a shared pool and a zero-knowledge proof keep who paid private, and where the limits are.">
+</head>
+<body class="page-learn">
+<a class="skip" href="#main">Skip to content</a>
+<svg class="defs" width="0" height="0" aria-hidden="true" focusable="false"><defs>
+<symbol id="pine" viewBox="-8 -17 16 17" overflow="visible"><path d="M0-16 7 0H-7Z"/><path class="a-snow" d="M0-16 2.5-10h-5Z"/><rect class="a-pine" x="-1.6" y="-1" width="3.2" height="2"/></symbol>
+<symbol id="house" viewBox="-12 -20 24 20" overflow="visible"><rect class="a-stone" x="-10" y="-12" width="20" height="12"/><path class="a-brick" d="M-10-4h20M-10-8h20M-4-8v4M4-8v4M0-12v4M0-4v4"/><path class="a-roof" d="M-12.5-12 0-19l12.5 7Z"/><path class="a-snow" d="M-12.5-12 0-19l12.5 7-2.2-.6L0-17.2-10.3-12.6Z"/><rect class="a-win" x="-6.5" y="-9.5" width="3.4" height="3.4"/><rect class="a-win" x="3.1" y="-9.5" width="3.4" height="3.4"/><rect class="a-pine" x="-1.6" y="-5" width="3.2" height="5"/></symbol>
+</defs></svg>
+
+<header class="top">
+  <div class="top-inner">
+    <a class="brand" href="/" aria-label="zipcoin, home"><svg class="mark" viewBox="0 0 512 512" aria-hidden="true" focusable="false"><circle cx="256" cy="256" r="256" fill="#101b1a"/><circle cx="256" cy="256" r="236" fill="none" stroke="currentColor" stroke-width="40"/><path fill="#f4f0e1" d="M268 190H384L244 322H128Z"/><path d="M323.7 158 290.9 191.6 319.5 219.6 286.7 253.2 258.1 225.2 225.3 258.8 253.9 286.8 221.1 320.4 192.5 292.4 159.7 326" fill="none" stroke="#101b1a" stroke-width="16"/><path fill="#f4f0e1" d="M136 118H376A8 8 0 0 1 384 126V184A8 8 0 0 1 376 192H136A8 8 0 0 1 128 184V126A8 8 0 0 1 136 118ZM136 320H376A8 8 0 0 1 384 328V386A8 8 0 0 1 376 394H136A8 8 0 0 1 128 386V328A8 8 0 0 1 136 320Z"/></svg><span>zipcoin</span></a>
+    <nav class="nav-main" aria-label="Site">
+      <ul>
+        <li><a href="/learn/">How it works</a></li>
+        <li><a href="/learn/privacy/" aria-current="page">Privacy</a></li>
+        <li><a href="/learn/couriers/">Couriers</a></li>
+        <li><a href="/learn/veridia/">Veridia</a></li>
+        <li><a href="/learn/faq/">FAQ</a></li>
+      </ul>
+    </nav>
+    <a class="top-source" href="https://github.com/redsol23/zipcoin-snowmoon" rel="noreferrer noopener">Source</a>
+    <details class="menu">
+      <summary class="menu-btn" aria-label="Menu"><span class="menu-icon" aria-hidden="true"></span></summary>
+      <nav class="menu-panel" id="site-menu" aria-label="Menu">
+        <ul>
+          <li><a href="/learn/">How it works</a></li>
+          <li><a href="/learn/privacy/" aria-current="page">Privacy</a></li>
+          <li><a href="/learn/tax/">Sales tax</a></li>
+          <li><a href="/learn/couriers/">Couriers</a></li>
+          <li><a href="/learn/veridia/">Veridia</a></li>
+          <li><a href="/learn/agents/">Agents</a></li>
+          <li><a href="/learn/novel/">The novel</a></li>
+          <li><a href="/learn/faq/">FAQ</a></li>
+          <li><a href="https://github.com/redsol23/zipcoin-snowmoon" rel="noreferrer noopener">Source</a></li>
+        </ul>
+      </nav>
+    </details>
+  </div>
+</header>
+
+<main id="main">
+
+<section class="page-head page-head-topic" aria-labelledby="topic-title">
+  <div class="wrap">
+    <p class="crumb"><a href="/learn/">How it works</a></p>
+    <h1 id="topic-title">Privacy</h1>
+    <p class="intro">How a shared pool and a zero-knowledge proof keep who paid private, and where the limits are.</p>
+  </div>
+</section>
+
+<section id="how" class="band how" aria-labelledby="how-title">
+  <div class="wrap grid">
+    <header class="how-head">
+      <h2 id="how-title">How zipping works</h2>
+      <figure class="quote">
+        <blockquote><p>Only Gladias and the restaurant knew that a 10.5 zipcoin order had been made.</p></blockquote>
+        <figcaption><cite>Snowmoon</cite>, chapter 6</figcaption>
+      </figure>
+    </header>
+    <p class="intro how-intro">On a public blockchain, every payment is normally visible to everyone, forever. Zipcoin gets the novel's privacy by letting everyone share one pool, so a payment can prove it's backed by real coins without saying whose.</p>
+
+    <ol class="flow">
+      <li>
+        <svg class="st-zip" viewBox="0 0 120 90" aria-hidden="true" focusable="false"><path class="i-line" d="M60 8v40" stroke-width="2" stroke-dasharray="4 6"/><circle class="i-ring" cx="60" cy="14" r="9" stroke-width="4"/><path class="i-pool-edge" d="M14 66c0-10 20-16 46-16s46 6 46 16-20 16-46 16-46-6-46-16Z"/><circle class="i-dot" cx="36" cy="66" r="3.5"/><circle class="i-dot" cx="52" cy="72" r="3.5"/><circle class="i-dot" cx="70" cy="62" r="3.5"/><circle class="i-dot" cx="84" cy="71" r="3.5"/><circle class="i-dot" cx="60" cy="60" r="3.5"/></svg>
+        <h3>Zip</h3>
+        <p>You move ZC into one shared pool. The deposit itself is public, like walking into a crowded square: people see you arrive.</p>
+      </li>
+      <li>
+        <svg class="st-crowd" viewBox="0 0 120 90" aria-hidden="true" focusable="false"><circle class="i-pool" cx="60" cy="45" r="42"/><circle class="i-dot" cx="53.8" cy="22.5" r="3"/><circle class="i-dot" cx="41.4" cy="66.4" r="3"/><circle class="i-dot" cx="67.3" cy="58" r="3"/><circle class="i-dot" cx="41" cy="52.2" r="3"/><circle class="i-dot" cx="54.7" cy="68.8" r="3"/><circle class="i-dot" cx="67.6" cy="35" r="3"/><circle class="i-dot" cx="90.3" cy="40.8" r="3"/><circle class="i-dot" cx="82" cy="59.3" r="3"/><circle class="i-dot" cx="34.6" cy="27" r="3"/><circle class="i-dot" cx="53.2" cy="57.3" r="3"/><circle class="i-dot" cx="38.9" cy="40.8" r="3"/><circle class="i-dot" cx="74.7" cy="27.9" r="3"/><circle class="i-dot" cx="59" cy="49.6" r="3"/><circle class="i-dot" cx="75.4" cy="46.8" r="3"/><circle class="i-dot" cx="83.5" cy="30" r="3"/><circle class="i-dot" cx="60.7" cy="28.5" r="3"/><circle class="i-dot" cx="56.9" cy="78.3" r="3"/><circle class="i-dot" cx="78.7" cy="69.3" r="3"/><circle class="i-dot" cx="30.7" cy="44.8" r="3"/><circle class="i-dot" cx="65" cy="15.9" r="3"/><circle class="i-dot" cx="91.4" cy="54.3" r="3"/><circle class="i-dot" cx="62.6" cy="42" r="3"/><circle class="i-dot" cx="45.1" cy="19.7" r="3"/><circle class="i-dot" cx="31.2" cy="55.8" r="3"/><circle class="i-dot" cx="69.7" cy="74.7" r="3"/><circle class="i-dot" cx="48.3" cy="45.6" r="3"/><circle class="i-dot" cx="53.9" cy="13.4" r="3"/><circle class="i-dot" cx="50.5" cy="34.2" r="3"/><circle class="i-dot" cx="79.7" cy="19.6" r="3"/><circle class="i-dot" cx="91.9" cy="31.9" r="3"/><circle class="i-dot" cx="47.4" cy="73.3" r="3"/><circle class="i-dot" cx="32.8" cy="67" r="3"/><circle class="i-dot" cx="43.2" cy="28.3" r="3"/><circle class="i-dot" cx="63.6" cy="68.7" r="3"/><circle class="i-dot" cx="28.7" cy="34.4" r="3"/><circle class="i-dot" cx="83.9" cy="50.2" r="3"/><circle class="i-dot" cx="77.7" cy="36.8" r="3"/><circle class="i-dot" cx="73.3" cy="13.5" r="3"/><circle class="i-dot" cx="86.7" cy="66.5" r="3"/></svg>
+        <h3>Join the crowd</h3>
+        <p>Inside, your coins become a note among everyone else's. Each note is a secret only its owner holds.</p>
+      </li>
+      <li>
+        <svg class="st-prove" viewBox="0 0 120 90" aria-hidden="true" focusable="false"><g class="st-env"><rect class="i-paper" x="30" y="24" width="60" height="40" rx="2"/><path class="i-edge" d="M30 24h60v40H30ZM30 24l30 22 30-22" fill="none" stroke-width="2"/><circle class="i-seal" cx="60" cy="46" r="7"/></g><path class="i-line" d="M8 44h14M98 44h14" stroke-width="2" stroke-dasharray="4 6"/></svg>
+        <h3>Spend with a proof</h3>
+        <p>To pay, your wallet makes a zero-knowledge proof, a short piece of math that shows you own <em>some</em> note in the pool without saying which. The amount is public; who paid is not.</p>
+      </li>
+      <li>
+        <svg class="st-paid" viewBox="0 0 120 90" aria-hidden="true" focusable="false"><path class="i-line" d="M20 45h18M38 45 60 18h18M38 45l22 27h18" fill="none" stroke-width="2"/><circle class="i-ring" cx="92" cy="18" r="10" stroke-width="4"/><rect class="i-tax" x="80" y="62" width="24" height="20" rx="2"/><path class="i-flame" d="M10 45c-5-4-4-9 0-14 1 4 5 5 5 9s-2 5-5 5Z"/></svg>
+        <h3>The merchant and the tax are paid</h3>
+        <p>One proof pays the shop and the sales tax at once. The tax splits on the spot: part is burned, part pays the couriers, the rest goes to a treasury.</p>
+      </li>
+    </ol>
+
+    <div class="explainer">
+      <h3>Why a bigger crowd hides everyone</h3>
+      <p>A proof says, in effect, “one of these notes is mine.” In a pool of ten notes, that narrows it to ten people. In a pool of ten thousand, it narrows it to almost nothing.</p>
+      <p>That's why every feature here spends from the same single pool. Every meal, send, burn and vote makes the crowd bigger, and hides everyone else a little better.</p>
+    </div>
+    <div class="explainer">
+      <h3>The postman</h3>
+      <p>A shared pool shouldn't become a hiding place for stolen money. So new deposits wait for the postman, a service that screens them and publishes the list of approved deposits on a fixed schedule. When you spend, your proof also shows that your note is on that list.</p>
+      <p>The postman can't take anyone's coins. If it never approves a deposit, the owner can always withdraw it publicly. That's called a ragequit.</p>
+    </div>
+  </div>
+</section>
+
+<section id="different" class="band different" aria-labelledby="different-title">
+  <div class="wrap grid">
+    <p class="different-link">What makes this different, in six lines: <a href="/#different">on the homepage</a>.</p>
+
+    <article id="pool" class="pool" aria-labelledby="pool-title">
+      <div class="pool-copy">
+        <h3 id="pool-title">Our pool: 0xbow Privacy Pools, tuned for ZC</h3>
+        <p>Zipcoin runs its own instance of 0xbow's Privacy Pools. Its privacy comes from that design: zero-knowledge proofs, association sets (the postman's list of approved deposits) and ragequit. 0xbow's contracts are open source, and 0xbow <a href="https://github.com/0xbow-io/privacy-pools-core/tree/main/audit" rel="noreferrer noopener">publishes audit reports</a> for its upstream contracts and circuits.</p>
+        <p>We add one deliberately small extension. ZC pays its holders rewards in ETH, and ZC sitting in an ordinary privacy pool would leave those rewards unclaimed for good. Our pool can claim them, anyone can trigger the claim, and the ETH goes straight to the project treasury (a multisig). The extension never touches deposits, balances or the anonymity set: the pool's accounting is unchanged.</p>
+        <p class="pool-disclose"><strong>Good to know.</strong> ZC pays its holders ETH rewards. While your ZC is zipped in the pool, those rewards go to the project treasury instead of to you.</p>
+      </div>
+      <div class="pool-art"><svg class="pool-svg" viewBox="0 0 400 240" role="img" aria-labelledby="pool-art-t"><title id="pool-art-t">The pool's notes stay where they are, while the ETH that ZC pays the pool travels out to the project treasury.</title>
+<circle class="i-pool" cx="110" cy="120" r="84"/><circle class="p-ring" cx="110" cy="120" r="84" fill="none" stroke-width="3"/><circle class="i-dot" cx="116.4" cy="121.3" r="4.5"/><circle class="i-dot" cx="71.1" cy="103.9" r="4.5"/><circle class="i-dot" cx="122.4" cy="170" r="4.5"/><circle class="i-dot" cx="119.1" cy="102.8" r="4.5"/><circle class="i-dot" cx="104.3" cy="106.1" r="4.5"/><circle class="i-dot" cx="58.3" cy="130.8" r="4.5"/><circle class="i-dot" cx="56.8" cy="110.7" r="4.5"/><circle class="i-dot" cx="99.5" cy="138.7" r="4.5"/><circle class="i-dot" cx="83.9" cy="173.3" r="4.5"/><circle class="i-dot" cx="150.6" cy="82.8" r="4.5"/><circle class="i-dot" cx="133" cy="90.1" r="4.5"/><circle class="i-dot" cx="68.4" cy="141.9" r="4.5"/><circle class="i-dot" cx="60.5" cy="89" r="4.5"/><circle class="i-dot" cx="92.6" cy="89.6" r="4.5"/><circle class="i-dot" cx="105.6" cy="71.3" r="4.5"/><circle class="i-dot" cx="77" cy="89.9" r="4.5"/><circle class="i-dot" cx="124.6" cy="59.6" r="4.5"/><circle class="i-dot" cx="149.6" cy="152.7" r="4.5"/><circle class="i-dot" cx="150.6" cy="168.3" r="4.5"/><circle class="i-dot" cx="99.7" cy="175.9" r="4.5"/><circle class="i-dot" cx="67.9" cy="164.5" r="4.5"/><circle class="i-dot" cx="85" cy="67.7" r="4.5"/><circle class="i-dot" cx="121.7" cy="152" r="4.5"/><circle class="i-dot" cx="170.1" cy="117.2" r="4.5"/><circle class="i-dot" cx="150.2" cy="127.1" r="4.5"/><circle class="i-dot" cx="109.4" cy="86.2" r="4.5"/><circle class="i-dot" cx="141.7" cy="106.4" r="4.5"/><circle class="i-dot" cx="128" cy="135.1" r="4.5"/><circle class="i-dot" cx="88.1" cy="109.8" r="4.5"/><circle class="i-dot" cx="92.2" cy="154.6" r="4.5"/><circle class="i-dot" cx="48.4" cy="142.5" r="4.5"/><circle class="i-dot" cx="76.1" cy="124" r="4.5"/><circle class="i-dot" cx="171.2" cy="144" r="4.5"/><circle class="i-dot" cx="157.4" cy="99" r="4.5"/>
+<path class="p-flow" d="M200 120H300" fill="none" stroke-width="2" stroke-dasharray="5 7"/><path class="p-eth p-eth-1" d="M236 109l7 11-7 4-7-4Z M236 126l7-4-7 10-7-10Z"/><path class="p-eth p-eth-2" d="M270 109l7 11-7 4-7-4Z M270 126l7-4-7 10-7-10Z"/>
+<g transform="translate(340 150)"><path class="c-slate" d="M-36-52 0-74l36 22Z"/><rect class="p-bank" x="-32" y="-52" width="64" height="52"/><path class="p-col" d="M-22-46v40M-8-46v40M8-46v40M22-46v40" stroke-width="5"/><rect class="c-slate" x="-36" y="-4" width="72" height="6"/></g>
+<text class="c-label" x="110" y="228" text-anchor="middle">the pool, unchanged</text><text class="c-label" x="340" y="178" text-anchor="middle">treasury</text><text class="c-label" x="253" y="100" text-anchor="middle">ETH</text></svg></div>
+    </article>
+  </div>
+</section>
+
+<p class="share wrap"><span class="share-label">Share</span> <a href="https://x.com/intent/post?text=Privacy%3A%20How%20a%20shared%20pool%20and%20a%20zero-knowledge%20proof%20keep%20who%20paid%20private%2C%20and%20where%20the%20limits%20are.&amp;url=https%3A%2F%2Fzipcoin.org%2Flearn%2Fprivacy%2F" aria-label="Share on X" rel="noreferrer noopener">X</a> <a href="https://warpcast.com/~/compose?text=Privacy%3A%20How%20a%20shared%20pool%20and%20a%20zero-knowledge%20proof%20keep%20who%20paid%20private%2C%20and%20where%20the%20limits%20are.&amp;embeds%5B%5D=https%3A%2F%2Fzipcoin.org%2Flearn%2Fprivacy%2F" aria-label="Share on Farcaster" rel="noreferrer noopener">Farcaster</a></p>
+<nav class="pager wrap" aria-label="More topics">
+  <a class="pager-prev" href="/learn/">← How it works</a>
+  <a class="pager-hub" href="/learn/">All topics</a>
+  <a class="pager-next" rel="next" href="/learn/tax/">Next: Sales tax →</a>
+</nav>
+
+</main>
+
+<footer class="foot">
+  <div class="wrap grid">
+    <p class="foot-cta"></p>
+    <div class="foot-main">
+      <p class="foot-brand"><svg class="mark" viewBox="0 0 512 512" aria-hidden="true" focusable="false"><circle cx="256" cy="256" r="256" fill="#101b1a"/><circle cx="256" cy="256" r="236" fill="none" stroke="currentColor" stroke-width="40"/><path fill="#f4f0e1" d="M268 190H384L244 322H128Z"/><path d="M323.7 158 290.9 191.6 319.5 219.6 286.7 253.2 258.1 225.2 225.3 258.8 253.9 286.8 221.1 320.4 192.5 292.4 159.7 326" fill="none" stroke="#101b1a" stroke-width="16"/><path fill="#f4f0e1" d="M136 118H376A8 8 0 0 1 384 126V184A8 8 0 0 1 376 192H136A8 8 0 0 1 128 184V126A8 8 0 0 1 136 118ZM136 320H376A8 8 0 0 1 384 328V386A8 8 0 0 1 376 394H136A8 8 0 0 1 128 386V328A8 8 0 0 1 136 320Z"/></svg><span>zipcoin</span></p>
+      <p>A fan project, not affiliated with the author. Not on mainnet. Nothing here is investment advice.</p>
+      <p>Built on <a href="https://github.com/0xbow-io/privacy-pools-core" rel="noreferrer noopener">0xbow privacy-pools-core</a> and <a href="https://github.com/semaphore-protocol/semaphore" rel="noreferrer noopener">Semaphore</a>. The world is Vitalik Buterin's <cite>Snowmoon</cite>.</p>
+    </div>
+    <ul class="foot-links">
+      <li><a href="https://github.com/redsol23/zipcoin-snowmoon" rel="noreferrer noopener">Source on GitHub</a></li>
+      <li><a href="https://vitalik.eth.limo/general/2026/09/27/the_cryptographic_world_computer.html" rel="noreferrer noopener"><cite>The cryptographic world computer</cite></a></li>
+      <li><a href="/ledger/">Ledger</a> · <a href="/status/">Status</a></li>
+      <li><a href="#main">Back to top</a></li>
+    </ul>
+  </div>
+</footer>
+</body>
+</html>

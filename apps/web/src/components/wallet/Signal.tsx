@@ -2,24 +2,25 @@
 
 import {
   badgeReturnSecrets,
+  badgeRewardAccount,
   encodeLock,
   encodePollCreation,
   groupMembers,
   hashPrecommitment,
   memberSiblings,
-  proveMembership,
+  pendingEth,
   toJson,
   zipBadgesAbi,
-  zipPollsAbi,
-  zipSignalAbi,
 } from "@zipnet/sdk";
 import clsx from "clsx";
 import { useCallback, useEffect, useState } from "react";
-import { isAddress, keccak256, parseAbiItem, toHex, type Address } from "viem";
+import { formatEther, isAddress, parseAbiItem, zeroAddress, type Address } from "viem";
 
+import { answerPoll, postToBoard } from "@/lib/anon";
+import { pollRewardAddress } from "@/lib/poll-rewards";
 import { courierQuote, pickNote, spend, type Config } from "@/lib/wallet";
 
-import { Button, Field, inputCls, Result, toWei, zc, type Outcome } from "./ui";
+import { Button, checkJob, errorText, Field, inputCls, Result, toWei, zc, type Outcome } from "./ui";
 import { useWallet } from "./WalletProvider";
 
 // ---------------------------------------------------------------------------------------------------------------
@@ -47,11 +48,11 @@ function useTiers() {
 }
 
 /** Posts and votes carry no fee, so they go to the courier as plain jobs. */
-async function freeJob(c: Config, kind: "post" | "vote" | "unlock", args: unknown[], holdSec = 0) {
+async function freeJob(c: Config, kind: "post" | "vote" | "unlock" | "claimEth", args: unknown[], holdSec = 0) {
   const res = await fetch(`${c.courierUrl}/jobs`, { method: "POST", headers: { "content-type": "application/json" }, body: toJson({ kind, args, holdSec }) });
   const j = await res.json();
   if (!res.ok) throw new Error(j.error ?? `The courier refused the job (${res.status}).`);
-  return j as { id: string; tx?: string };
+  return checkJob(j as { id: string; status: string; tx?: string });
 }
 
 function useRun() {
@@ -63,7 +64,7 @@ function useRun() {
     try {
       setOut(await fn());
     } catch (e) {
-      setOut({ tone: "error", text: (e as Error).message.split("\n")[0] });
+      setOut({ tone: "error", text: errorText(e) });
     } finally {
       setBusy(false);
     }
@@ -71,7 +72,9 @@ function useRun() {
   return { busy, out, run };
 }
 
-const activeTier = (locks: ReturnType<typeof useWallet>["locks"]) => locks.find((l) => !l.unlocked) ?? null;
+type Lock = ReturnType<typeof useWallet>["locks"][number];
+/** The live badge lock with the highest tier (a key may hold several, one identity each, A-7) */
+const activeTier = (locks: Lock[]) => locks.filter((l) => !l.unlocked).sort((a, b) => b.tier - a.tier)[0] ?? null;
 const DAY = 86_400;
 
 // ---------------------------------------------------------------------------------------------------------------
@@ -103,28 +106,30 @@ export function Badges() {
       const q = await courierQuote(w.config);
       const r = badgeReturnSecrets(w.zip.keys, BigInt(w.locks.length));
       const data = encodeLock({
-        identityCommitment: w.zip.identity.commitment,
+        identityCommitment: w.zip.nextLockIdentity.commitment, // a fresh identity per lock (A-7)
         duration: BigInt(d * DAY),
         returnPrecommitment: hashPrecommitment(r.nullifier, r.secret),
         courier: { feeRecipient: q.courier, fee: q.fee("lock") },
+        rewardTo: badgeRewardAccount(w.zip.keys, BigInt(w.locks.length)).address, // one reward address per lock (I-3)
       });
       const note = pickNote(w.notes.spendable, v + q.fee("lock"));
       if (!note) throw new Error(`Your largest cleared note holds ${zc(w.notes.largest)} ZC.`);
-      await spend(w.config, w.zip.keys, w.pool, note, v + q.fee("lock"), "lock", w.config.deployment.badges, data, 0);
+      checkJob(await spend(w.config, w.zip.keys, w.pool, note, v + q.fee("lock"), "lock", w.config.deployment.badges, data, 0));
       setTimeout(w.refresh, 3000);
       return { tone: "ok", text: `Locked ${zc(v)} ZC from a zipped note for ${d} days. You hold a tier ${tier} badge, and nobody can tell which wallet is behind it.` };
     });
 
-  const unlock = () =>
+  const live = w.locks.filter((l) => !l.unlocked).sort((a, b) => b.tier - a.tier);
+  const unlock = (lock: Lock) =>
     run(async () => {
-      if (!w.config || !w.pub || !w.zip || !active) throw new Error("Nothing to unlock.");
+      if (!w.config || !w.pub || !w.zip) throw new Error("Nothing to unlock.");
       const siblings: bigint[][] = [];
-      for (let i = 0; i < active.tier; i++) {
-        siblings.push(memberSiblings(await groupMembers(w.pub, w.config.deployment.semaphore, tiers!.groups[i], BigInt(w.config.deployment.deployBlock)), w.zip.identity.commitment));
+      for (let i = 0; i < lock.tier; i++) {
+        siblings.push(memberSiblings(await groupMembers(w.pub, w.config.deployment.semaphore, tiers!.groups[i], BigInt(w.config.deployment.deployBlock)), lock.identityCommitment));
       }
-      await freeJob(w.config, "unlock", [active.lockId, siblings]);
+      await freeJob(w.config, "unlock", [lock.lockId, siblings]);
       setTimeout(w.refresh, 3000);
-      return { tone: "ok", text: `${zc(active.value)} ZC goes back into the pool as a note only your key can spend. The badge is gone.` };
+      return { tone: "ok", text: `${zc(lock.value)} ZC goes back into the pool as a note only your key can spend. That badge is gone.` };
     });
 
   return (
@@ -144,42 +149,102 @@ export function Badges() {
           ))}
         </dl>
       )}
-      {active ? (
-        <div className="space-y-3">
+      {live.map((l) => (
+        <div key={l.lockId.toString()} className="space-y-3">
           <p>
-            You hold a <strong>tier {active.tier}</strong> badge: {zc(active.value)} ZC locked until{" "}
-            {new Date(active.unlockAt * 1000).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}.
+            You hold a <strong>tier {l.tier}</strong> badge: {zc(l.value)} ZC locked until{" "}
+            {new Date(l.unlockAt * 1000).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}.
           </p>
-          {active.unlockAt <= now ? (
-            <Button tone="pad" busy={busy} onClick={unlock}>
+          {l.unlockAt <= now ? (
+            <Button tone="pad" busy={busy} onClick={() => unlock(l)}>
               Unlock and take the coins back
             </Button>
           ) : (
-            <p className="text-sm text-lichen">You can unlock once the time is up. One badge per key at a time.</p>
+            <p className="text-sm text-lichen">You can unlock once the time is up.</p>
           )}
         </div>
-      ) : (
-        <form
-          onSubmit={(e) => {
-            e.preventDefault();
-            lock();
-          }}
-          className="max-w-lg space-y-4"
-        >
-          <div className="grid gap-4 sm:grid-cols-2">
-            <Field label="Amount">
-              <input className={inputCls} inputMode="decimal" placeholder="100" value={amount} onChange={(e) => setAmount(e.target.value)} />
-            </Field>
-            <Field label="Days">
-              <input className={inputCls} inputMode="numeric" value={days} onChange={(e) => setDays(e.target.value)} />
-            </Field>
-          </div>
-          <p className="text-sm text-lichen">{v ? (tier ? `This earns tier ${tier}.` : "Not enough for tier 1 yet.") : "Weight is amount × days."}</p>
-          <Button type="submit" tone="pad" busy={busy} disabled={!v || !tier}>
-            Lock and earn the badge
-          </Button>
-        </form>
-      )}
+      ))}
+      {live.length > 0 && <p className="text-sm text-lichen">Each badge has its own identity, so your badges can&apos;t be linked to each other. You can add another one below.</p>}
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          lock();
+        }}
+        className="max-w-lg space-y-4"
+      >
+        <div className="grid gap-4 sm:grid-cols-2">
+          <Field label="Amount">
+            <input className={inputCls} inputMode="decimal" placeholder="100" value={amount} onChange={(e) => setAmount(e.target.value)} />
+          </Field>
+          <Field label="Days">
+            <input className={inputCls} inputMode="numeric" value={days} onChange={(e) => setDays(e.target.value)} />
+          </Field>
+        </div>
+        <p className="text-sm text-lichen">{v && (d < 7 || d > 730) ? "Lock for 7 to 730 days." : v ? (tier ? `This earns tier ${tier}.` : "Not enough for tier 1 yet.") : "Weight is amount × days."}</p>
+        <Button type="submit" tone="pad" busy={busy} disabled={!v || !tier}>
+          Lock and earn the badge
+        </Button>
+      </form>
+      <BadgeEth />
+      <Result out={out} />
+    </div>
+  );
+}
+
+/**
+ * ETH that locked ZC earns (ZC pays its holders ETH). It goes to addresses derived from the zip key, not the wallet, so
+ * the badges stay unlinked: one per lock for new locks (I-3), and the one-per-key address older locks named. A courier
+ * pays each out because those addresses have no gas of their own. Each is claimed on its own, so a courier isn't
+ * handed several of them at once (which would link those locks).
+ */
+function BadgeEth() {
+  const w = useWallet();
+  const { busy, out, run } = useRun();
+  const [rows, setRows] = useState<{ account: Address; pending: bigint; held: bigint }[]>([]);
+  const keys = w.zip?.keys;
+  const count = w.locks.length;
+  const load = useCallback(async () => {
+    if (!w.config || !w.pub || !keys) return;
+    const accounts = [badgeRewardAccount(keys).address, ...Array.from({ length: count }, (_, i) => badgeRewardAccount(keys, BigInt(i)).address)];
+    const all = await Promise.all(
+      accounts.map(async (account) => {
+        const [pending, held] = await Promise.all([pendingEth(w.pub!, w.config!.deployment, "badges", account), w.pub!.getBalance({ address: account })]);
+        return { account, pending, held };
+      }),
+    );
+    setRows(all.filter((r) => r.pending > 0n || r.held > 0n));
+  }, [w.config, w.pub, keys, count]);
+  useEffect(() => {
+    load().catch(() => setRows([]));
+  }, [load, w.pool]);
+  if (!rows.length) return null;
+
+  const claim = (account: Address) =>
+    run(async () => {
+      if (!w.config) throw new Error("Not connected.");
+      await freeJob(w.config, "claimEth", [account]);
+      setTimeout(load, 3000);
+      return { tone: "ok", text: `Sent to ${account}, a reward address only your zip key controls.` };
+    });
+
+  return (
+    <div className="space-y-1 text-sm">
+      {rows.map((r) => (
+        <div key={r.account}>
+          <p>
+            ETH rewards at {r.account.slice(0, 8)}…: {formatEther(r.pending)} ETH{" "}
+            {r.pending > 0n && (
+              <>
+                &mdash;{" "}
+                <Button tone="quiet" busy={busy} onClick={() => claim(r.account)}>
+                  Claim
+                </Button>
+              </>
+            )}
+          </p>
+          {r.held > 0n && <p className="text-lichen">{formatEther(r.held)} ETH claimed so far, held there. Spending it from there links it to wherever it goes.</p>}
+        </div>
+      ))}
       <Result out={out} />
     </div>
   );
@@ -216,24 +281,11 @@ export function Board() {
     run(async () => {
       if (!w.config || !w.pub || !w.zip || !tiers || !active) throw new Error("You need a badge to post here.");
       if (!text.trim()) throw new Error("Write something first.");
-      const g = tiers.groups[tierIdx];
-      const members = await groupMembers(w.pub, w.config.deployment.semaphore, g, BigInt(w.config.deployment.deployBlock));
-      const day = BigInt(Math.floor(Date.now() / 1000 / DAY));
-      const message = BigInt(keccak256(toHex(text)));
-      // Five posts per badge per day; each slot is one nullifier, so try the next slot when one is used up
-      for (let slot = 0n; slot < 5n; slot++) {
-        const scope = (await w.pub.readContract({ address: w.config.deployment.signal, abi: zipSignalAbi, functionName: "scopeOf", args: [day, slot] })) as bigint;
-        const proof = await proveMembership(w.zip.identity, members, message, scope);
-        try {
-          await freeJob(w.config, "post", [g, slot, text, proof]);
-          setText("");
-          setTimeout(load, 3000);
-          return { tone: "ok", text: `Posted as a tier ${tierIdx + 1} badge holder. The proof shows you hold the badge, not which holder you are.` };
-        } catch (e) {
-          if (!/simulation reverted/i.test((e as Error).message)) throw e;
-        }
-      }
-      throw new Error("You've used today's five posts for this badge. Try again tomorrow.");
+      // Five posts per badge per day; the free slot is picked locally, and only its proof is sent (A-3)
+      await postToBoard({ config: w.config, pub: w.pub, provers: w.zip.provers }, tiers.groups[tierIdx], text);
+      setText("");
+      setTimeout(load, 3000);
+      return { tone: "ok", text: `Posted as a tier ${tierIdx + 1} badge holder. The proof shows you hold the badge, not which holder you are.` };
     });
 
   return (
@@ -331,21 +383,18 @@ export function Polls() {
   const vote = (p: Poll, option: number) =>
     run(async () => {
       if (!w.config || !w.pub || !w.zip) throw new Error("Unlock your zip key first.");
-      const to = (rewardTo || w.address) as Address;
-      if (!isAddress(to)) throw new Error("Enter where the reward should go.");
-      const members = await groupMembers(w.pub, w.config.deployment.semaphore, p.groupId, BigInt(w.config.deployment.deployBlock));
-      if (!members.includes(w.zip.identity.commitment)) throw new Error("This poll asks a group you're not in. Earn that badge tier first.");
-      const scope = (await w.pub.readContract({ address: w.config.deployment.polls, abi: zipPollsAbi, functionName: "scopeOf", args: [p.id] })) as bigint;
-      const message = (await w.pub.readContract({ address: w.config.deployment.polls, abi: zipPollsAbi, functionName: "messageOf", args: [option, to] })) as bigint;
-      const proof = await proveMembership(w.zip.identity, members, message, scope);
-      try {
-        await freeJob(w.config, "vote", [p.id, option, to, proof]);
-      } catch (e) {
-        if (/simulation reverted/i.test((e as Error).message)) throw new Error("You've already answered this poll, or it has closed.");
-        throw e;
-      }
+      // The reward address is public next to the answer (ZipPolls.Voted), so it is never the wallet by default (A-4):
+      // an unrewarded poll names no address at all, a rewarded one pays a fresh address derived from the zip key for
+      // this poll alone, unless another address is entered.
+      const to = (rewardTo || (p.reward === 0n ? zeroAddress : pollRewardAddress(w.zip.phrase, p.id))) as Address;
+      if (!isAddress(to)) throw new Error("That reward address isn't valid.");
+      // Scope and message are computed here from the poll id, option and address (A-9), not read from the RPC
+      await answerPoll({ config: w.config, pub: w.pub, provers: w.zip.provers }, p, option, to, [w.address]);
       setTimeout(load, 3000);
-      return { tone: "ok", text: `Answered "${p.options[option]}". ${p.reward ? `${zc(p.reward)} ZC goes to ${to.slice(0, 8)}… if the rewards haven't run out.` : ""}` };
+      return {
+        tone: "ok",
+        text: `Answered "${p.options[option]}". ${p.reward && to !== zeroAddress ? `${zc(p.reward)} ZC goes to ${to.slice(0, 8)}… (${rewardTo ? "the address you entered" : "a fresh address only your zip key controls"}) if the rewards haven't run out.` : ""}`,
+      };
     });
 
   const now = Math.floor(Date.now() / 1000);
@@ -355,8 +404,8 @@ export function Polls() {
         <Button tone="quiet" onClick={() => setAsking((a) => !a)}>
           {asking ? "Close" : "Ask a question"}
         </Button>
-        <Field label="" hint="Rewards for answering go here. A fresh address keeps your answers unlinked.">
-          <input className={clsx(inputCls, "max-w-md")} placeholder={w.address ? `Reward to ${w.address}` : "0x…"} value={rewardTo} onChange={(e) => setRewardTo(e.target.value.trim())} />
+        <Field label="" hint="Rewards go to a fresh address per poll that only your zip key controls, never your wallet. It is public next to your answer, so only enter one you never use elsewhere.">
+          <input className={clsx(inputCls, "max-w-md")} placeholder="Reward to a fresh address (default)" value={rewardTo} onChange={(e) => setRewardTo(e.target.value.trim())} />
         </Field>
       </div>
       {asking && tiers && <AskForm tiers={tiers} onDone={load} />}
@@ -437,7 +486,7 @@ function AskForm({ tiers, onDone }: { tiers: Tiers; onDone: () => void }) {
       });
       const note = pickNote(w.notes.spendable, total + q.fee("poll"));
       if (!note) throw new Error(`This poll needs ${zc(total)} ZC in one note; your largest holds ${zc(w.notes.largest)}.`);
-      await spend(w.config, w.zip.keys, w.pool, note, total + q.fee("poll"), "poll", w.config.deployment.polls, data, 0);
+      checkJob(await spend(w.config, w.zip.keys, w.pool, note, total + q.fee("poll"), "poll", w.config.deployment.polls, data, 0));
       setTimeout(onDone, 3000);
       return { tone: "ok", text: `Asked, anonymously. ${zc(b)} ZC burned so people take it seriously; up to ${m} answers get ${zc(r)} ZC each. Unused rewards burn when it closes.` };
     });

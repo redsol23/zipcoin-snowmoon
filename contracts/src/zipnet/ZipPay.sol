@@ -11,6 +11,7 @@ import {IPrivacyPool} from 'interfaces/IPrivacyPool.sol';
 
 import {ZipMerchants} from './ZipMerchants.sol';
 import {ZipProcessooor} from './ZipProcessooor.sol';
+import {DeferredPayout} from './lib/DeferredPayout.sol';
 
 /**
  * @title ZipPay
@@ -22,11 +23,20 @@ import {ZipProcessooor} from './ZipProcessooor.sol';
  *
  * The payer is anonymous: the chain sees a note being spent, never whose. The order details travel in `receipt`,
  * encrypted to buyer and merchant. The merchant can take payment to its payout address or straight back into the
- * pool as a new note (`payeePrecommitment`), so its revenue stays zipped too.
+ * pool as a new note (`payeePrecommitment`), so its revenue stays zipped too. Trust assumption (M-12): such a note's
+ * depositor is this contract, and this contract has no ragequit path, so the note can leave the pool only through an
+ * ASP-approved withdrawal. A merchant that won't rely on the ASP takes revenue to its payout address instead. The
+ * deposit happens in the payment's own transaction, so a failed deposit (e.g. a reused precommitment) reverts the
+ * payment rather than freezing it. That deposit never pays the Entrypoint's vetting fee: if the Entrypoint OWNER ever
+ * sets one, payments that re-zip revert (R2-M3) rather than hand the OWNER part of the merchant's revenue; payments to
+ * the payout address are unaffected.
  *
  * A payer may also drop a Semaphore identity into the merchant's payer group (Snowmoon ch. 19: the Beautiful Plants
  * courtyard reaching "all their guests from the past half year"). The group can then be reached with ZipBroadcaster or
- * polled, and members can prove "I ate here" without saying who they are.
+ * polled, and members can prove "I ate here" without saying who they are. Joining takes a real purchase: a payment
+ * that adds an identity must have `base >= MIN_JOIN_BASE` (M-2), so every payer-group member cost at least that
+ * purchase's tax (a merchant paying itself gets the base back). The identity is public in the calldata and in `Paid`,
+ * so wallets use a fresh identity per merchant and send it only on the first payment (see the SDK's payerIdentity).
  *
  * Tax is split in real time: part burned, part to the courier reward pool that keeps the network private, the rest to
  * the treasury. Rates and recipients are fixed at deployment.
@@ -56,6 +66,8 @@ contract ZipPay is ZipProcessooor {
   address public immutable COURIER_POOL;
   address public immutable TREASURY;
   ISemaphore public immutable SEMAPHORE;
+  /// @notice Smallest base a payment must have to add an identity to the merchant's payer group
+  uint256 public immutable MIN_JOIN_BASE;
 
   /// @notice Semaphore group of each merchant's payers, created on first use (0 = none yet)
   mapping(uint256 merchantId => uint256 groupId) public payerGroup;
@@ -83,6 +95,7 @@ contract ZipPay is ZipProcessooor {
   error WrongTotal();
   error TooLong();
   error BadShares();
+  error BaseTooSmallToJoin();
 
   constructor(
     IPrivacyPool _pool,
@@ -92,7 +105,8 @@ contract ZipPay is ZipProcessooor {
     uint256 _courierShareBPS,
     address _courierPool,
     address _treasury,
-    ISemaphore _semaphore
+    ISemaphore _semaphore,
+    uint256 _minJoinBase
   ) ZipProcessooor(_pool) {
     if (_taxBPS > MAX_TAX_BPS || _burnShareBPS + _courierShareBPS > 10_000) revert BadShares();
     MERCHANTS = _merchants;
@@ -103,10 +117,17 @@ contract ZipPay is ZipProcessooor {
     COURIER_POOL = _courierPool;
     TREASURY = _treasury;
     SEMAPHORE = _semaphore;
+    MIN_JOIN_BASE = _minJoinBase;
   }
 
   function taxOn(uint256 _base) public view returns (uint256) {
     return (_base * TAX_BPS) / 10_000;
+  }
+
+  /// @notice Tax owed on a purchase of `_base` from `_merchantId`: the flat TAX_BPS
+  function taxFor(uint256 _merchantId, uint256 _base) public view virtual returns (uint256) {
+    _merchantId;
+    return taxOn(_base);
   }
 
   /// @notice Pay from a zipped note. The note must spend exactly base + tax + courier fee.
@@ -114,8 +135,7 @@ contract ZipPay is ZipProcessooor {
     Payment memory _p = abi.decode(_withdrawal.data, (Payment));
     _check(_p);
     (, uint256 _net) = _spend(_withdrawal, _proof, _p.courier);
-    uint256 _tax = taxOn(_p.base);
-    if (_net != _p.base + _tax) revert WrongTotal();
+    uint256 _tax = _taxPaid(_p.merchantId, _p.base, _net);
     _settle(_p, _tax);
     emit Paid(
       _p.merchantId, _p.orderId, address(0), _nullifierHash(_proof), _p.base, _tax, _p.courier.fee, _p.identityCommitment, _p.receipt
@@ -134,21 +154,28 @@ contract ZipPay is ZipProcessooor {
     Payment memory _p =
       Payment(_merchantId, _base, _orderId, _payeePrecommitment, _identityCommitment, _receipt, Courier(address(0), 0));
     _check(_p);
-    uint256 _tax = taxOn(_base);
+    uint256 _tax = taxFor(_merchantId, _base);
     ZC.safeTransferFrom(msg.sender, address(this), _base + _tax);
     _settle(_p, _tax);
     emit Paid(_merchantId, _orderId, msg.sender, 0, _base, _tax, 0, _identityCommitment, _receipt);
   }
 
+  /// @dev The tax a note's spend of `_net` covers on `_base`, which must be exactly base + tax
+  function _taxPaid(uint256 _merchantId, uint256 _base, uint256 _net) internal view virtual returns (uint256 _tax) {
+    _tax = taxFor(_merchantId, _base);
+    if (_net != _base + _tax) revert WrongTotal();
+  }
+
   function _check(Payment memory _p) internal view {
     if (!MERCHANTS.isListed(_p.merchantId)) revert NotListed();
     if (_p.receipt.length > MAX_RECEIPT_BYTES) revert TooLong();
+    if (_p.identityCommitment != 0 && (_p.base == 0 || _p.base < MIN_JOIN_BASE)) revert BaseTooSmallToJoin();
   }
 
   function _settle(Payment memory _p, uint256 _tax) internal {
     if (_p.payeePrecommitment != 0) {
-      ZC.forceApprove(address(ENTRYPOINT), _p.base);
-      ENTRYPOINT.deposit(ZC, _p.base, _p.payeePrecommitment);
+      // Reverts VettingFeeCharged if the Entrypoint would keep a fee of the merchant's revenue (R2-M3)
+      DeferredPayout.depositFeeFree(ENTRYPOINT, ZC, _p.base, _p.payeePrecommitment);
     } else {
       ZC.safeTransfer(MERCHANTS.payoutOf(_p.merchantId), _p.base);
     }

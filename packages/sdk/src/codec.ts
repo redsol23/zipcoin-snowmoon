@@ -1,5 +1,6 @@
 import { decodeAbiParameters, encodeAbiParameters, type Address, type Hex } from "viem";
 
+
 /**
  * `withdrawal.data` encoders, one per processooor. Each mirrors its Solidity struct field-for-field; the proof's
  * `context` commits to these bytes, so what is encoded here is exactly what the chain will execute.
@@ -78,7 +79,8 @@ export const encodePayment = (p: Payment) =>
     [p],
   );
 
-export type LockRequest = { identityCommitment: bigint; duration: bigint; returnPrecommitment: bigint; courier: Courier };
+/** `rewardTo` earns the lock's ETH rewards; omitted = nobody (see badgeRewardAccount for an unlinked address) */
+export type LockRequest = { identityCommitment: bigint; duration: bigint; returnPrecommitment: bigint; courier: Courier; rewardTo?: Address };
 export const encodeLock = (r: LockRequest) =>
   encodeAbiParameters(
     [
@@ -89,10 +91,11 @@ export const encodeLock = (r: LockRequest) =>
           { name: "duration", type: "uint64" },
           { name: "returnPrecommitment", type: "uint256" },
           courier,
+          { name: "rewardTo", type: "address" },
         ],
       },
     ],
-    [r],
+    [{ ...r, rewardTo: r.rewardTo ?? "0x0000000000000000000000000000000000000000" }],
   );
 
 export type PollCreation = {
@@ -165,6 +168,7 @@ const PAYLOAD_FIELDS = {
     { name: "duration", type: "uint64" },
     { name: "returnPrecommitment", type: "uint256" },
     courier,
+    { name: "rewardTo", type: "address" },
   ],
   poll: [
     { name: "groupId", type: "uint256" },
@@ -177,3 +181,15 @@ const PAYLOAD_FIELDS = {
     courier,
   ],
 } as const;
+
+/** BatchRelayer: several of one person's notes unzipped to one recipient in a single transaction. */
+export type BatchRelay = { recipient: Address; feeRecipient: Address; relayFeeBPS: bigint; batchSize: number; totalValue: bigint };
+const BATCH_FIELDS = [
+  { name: "recipient", type: "address" },
+  { name: "feeRecipient", type: "address" },
+  { name: "relayFeeBPS", type: "uint256" },
+  { name: "batchSize", type: "uint8" },
+  { name: "totalValue", type: "uint256" },
+] as const;
+export const encodeBatchRelay = (b: BatchRelay) => encodeAbiParameters([{ type: "tuple", components: BATCH_FIELDS }], [b]);
+export const decodeBatchRelay = (data: Hex) => decodeAbiParameters([{ type: "tuple", components: BATCH_FIELDS }], data)[0] as BatchRelay;

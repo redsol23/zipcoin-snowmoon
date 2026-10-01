@@ -36,6 +36,19 @@ export function buildTree(leaves: bigint[]): LeanIMT<bigint> {
   return t;
 }
 
+/**
+ * Gas to add to an estimate for a transaction that inserts `inserts` leaves into the pool's state tree (a deposit, or
+ * a spend's change note). The estimate is made against the tree as it is now, but a LeanIMT insert hashes once per
+ * level where the new leaf's index has a 1 bit (and only stores a node where it has a 0), so the same insert costs
+ * more when other leaves land first in the block: up to one Poseidon hash per level. Without it, a burst of concurrent
+ * deposits can run out of gas. `treeDepth` is the pool's currentTreeDepth().
+ */
+export const INSERT_GAS_PER_LEVEL = 30_000n;
+export const insertGasHeadroom = (treeDepth: bigint | number, inserts = 1) => BigInt(inserts) * (BigInt(treeDepth) + 2n) * INSERT_GAS_PER_LEVEL;
+
+/** The depth of a LeanIMT holding `size` leaves: what the pool's currentTreeDepth() reads */
+export const treeDepthOf = (size: number) => (size <= 1 ? 0 : Math.ceil(Math.log2(size)));
+
 export type TreeProof = { root: bigint; depth: bigint; index: bigint; siblings: bigint[] };
 
 /** Inclusion proof for `leaf`, in the shape the circuit takes (siblings padded to MAX_TREE_DEPTH). */

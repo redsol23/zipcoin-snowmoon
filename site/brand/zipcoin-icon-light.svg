@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512"><rect width="100%" height="100%" fill="#ecf0ec"/><g transform="translate(256 256) scale(.84) translate(-256 -256)"><circle cx="256" cy="256" r="236" fill="#101b1a"/>
+<circle cx="256" cy="256" r="226" fill="none" stroke="#22a866" stroke-width="20"/>
+<g fill="#f4f0e1">
+<rect x="146" y="132" width="220" height="56" rx="8"/>
+<rect x="146" y="324" width="220" height="56" rx="8"/>
+<path d="M282 186 L366 186 L230 326 L146 326Z"/>
+</g>
+<defs><clipPath id="md"><path d="M282 186 L366 186 L230 326 L146 326Z"/></clipPath></defs>
+<path clip-path="url(#md)" d="M327.1 159.9 L312.6 175.9 L330.3 192.1 L315.8 208.1 L298 191.9 L283.5 207.9 L301.2 224.1 L286.7 240.1 L268.9 223.9 L254.4 239.9 L272.2 256.1 L257.6 272.1 L239.8 255.9 L225.3 271.9 L243.1 288.1 L228.5 304.1 L210.8 287.9 L196.2 303.9 L214 320.1 L199.4 336.1 L181.7 319.9 L167.1 335.9" fill="none" stroke="#101b1a" stroke-width="8" stroke-linejoin="miter"/>
+</g></svg>

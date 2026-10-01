@@ -2,6 +2,7 @@ import { parseEther, type Hex } from "viem";
 
 import {
   context,
+  DENOMINATIONS,
   depositSecrets,
   encodeRelay,
   encodeSend,
@@ -18,7 +19,7 @@ import {
   type Note,
 } from "@zipnet/sdk";
 
-import { cfg, pub, wallet } from "./config";
+import { cfg, pub, sender } from "./config";
 import { accept, GAS } from "./jobs";
 import { asp, refresh, state } from "./state";
 
@@ -26,8 +27,10 @@ import { asp, refresh, state } from "./state";
  * Cover traffic: this courier keeps some ZC zipped and moves it around at random (Poisson) times, so the pool
  * always has background activity and a real user's deposit→withdraw timing stops standing out.
  *
- * Only pool actions: rezip to itself, or unzip part to its own wallet and zip it back later. Never token swaps,
- * never anything that looks like market volume. Capped by a daily gas budget. Publicly disclosed as a feature.
+ * Pool actions only: zip fresh coins in, rezip to itself, or unzip part to its own wallet and zip it back later. It
+ * never votes or posts: those need a membership it shouldn't fake, and would skew real results. Never token swaps,
+ * never anything that looks like market volume. Everything is capped by a daily gas budget. Publicly disclosed as a
+ * feature.
  * (Veridia's character agents are the richer version of this: the same traffic, living a story.)
  */
 
@@ -63,33 +66,27 @@ async function act() {
   const k = masterKeys(cfg.coverMnemonic!);
   const zipKey = zipAddressKeys(k.masterSecret);
   await refresh();
+  const gasPrice = await pub.getGasPrice();
+
   const mine = recoverNotes(k, cfg.dep.scope, state, { zipAddressKey: zipKey.privateKey });
   const spendable = mine.notes.filter((n) => asp.labels.includes(n.label) && n.value >= parseEther("2"));
-  const gasPrice = await pub.getGasPrice();
 
   if (spendable.length === 0 || Math.random() < 0.2) {
     if (!budgetLeft("relay", gasPrice)) return;
     // Zip fresh cover funds from the courier wallet (a deposit that looks like any other)
     const amount = parseEther(String(5 + Math.floor(Math.random() * 45)));
     const s = depositSecrets(k, cfg.dep.scope, mine.nextDepositIndex);
-    await pub.waitForTransactionReceipt({
-      hash: await wallet.writeContract({ chain: null, address: cfg.dep.zc, abi: erc20, functionName: "approve", args: [cfg.dep.entrypoint, amount] }),
-    });
-    await pub.waitForTransactionReceipt({
-      hash: await wallet.writeContract({
-        chain: null,
-        address: cfg.dep.entrypoint,
-        abi: entrypointAbi,
-        functionName: "deposit",
-        args: [cfg.dep.zc, amount, hashPrecommitment(s.nullifier, s.secret)],
-      }),
-    });
+    await sender.send("background", { address: cfg.dep.zc, abi: erc20, functionName: "approve", args: [cfg.dep.entrypoint, amount] });
+    await sender.send("background", { address: cfg.dep.entrypoint, abi: entrypointAbi, functionName: "deposit", args: [cfg.dep.zc, amount, hashPrecommitment(s.nullifier, s.secret)] });
     console.log(`[cover] zipped ${amount / 10n ** 18n} ZC`);
     return;
   }
 
   const n = spendable[Math.floor(Math.random() * spendable.length)];
-  const amount = (n.value * BigInt(20 + Math.floor(Math.random() * 60))) / 100n;
+  // Cover moves standard denominations, so it looks exactly like real users splitting large unzips into pieces
+  const fits = DENOMINATIONS.filter((d) => d <= (n.value * 8n) / 10n);
+  if (fits.length === 0) return;
+  const amount = fits[Math.floor(Math.random() * Math.min(3, fits.length))];
   if (Math.random() < 0.6) {
     if (!budgetLeft("rezip", gasPrice)) return;
     const to = randomSecrets();

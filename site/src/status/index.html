@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Status: zipcoin</title>
+<meta name="description" content="Is the network up? The postman and every bonded courier, checked once a minute.">
+<link rel="canonical" href="https://zipcoin.org/status/">
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#ECF0EC" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#101B1A" media="(prefers-color-scheme: dark)">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/favicon-32.png" type="image/png" sizes="32x32">
+<link rel="manifest" href="/site.webmanifest">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="preload" href="/fonts/newsreader-display.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/fonts/newsreader-text.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="/styles.css">
+<link rel="stylesheet" href="/data.css">
+<script src="/main.js" defer></script>
+<script src="/data.js" defer></script>
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="zipcoin">
+<meta property="og:url" content="https://zipcoin.org/status/">
+<meta property="og:title" content="Status">
+<meta property="og:description" content="Is the network up? The postman and every bonded courier, checked once a minute.">
+<meta property="og:image" content="https://zipcoin.org/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="A snow moon over a winter valley with stone houses, and the words: the private money of Snowmoon, on Ethereum.">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Status">
+<meta name="twitter:description" content="Is the network up? The postman and every bonded courier, checked once a minute.">
+<meta name="twitter:image" content="https://zipcoin.org/og.png">
+<meta name="twitter:image:alt" content="A snow moon over a winter valley with stone houses, and the words: the private money of Snowmoon, on Ethereum.">
+</head>
+<body class="page-learn page-data" data-page="status">
+<a class="skip" href="#main">Skip to content</a>
+<!--art:defs-->
+
+<!--part:header-->
+
+<main id="main">
+
+<section class="page-head page-head-topic" aria-labelledby="page-title">
+  <div class="wrap">
+    <h1 id="page-title">Status</h1>
+    <p class="intro">Is the network up? The postman and every bonded courier, checked once a minute.</p>
+    <p class="lg-state" data-live-state="waiting" aria-live="polite"><span class="lg-dot" aria-hidden="true"></span><span data-live-text><strong>Goes live at launch.</strong> zipcoin isn't on mainnet yet, so there's nothing to check. What each line will mean is below.</span></p>
+  </div>
+</section>
+
+<section id="postman" class="lg-band" aria-labelledby="postman-title">
+  <div class="wrap">
+    <h2 id="postman-title" class="lg-h2">The postman</h2>
+    <p class="intro">It approves deposits for private withdrawal and publishes the approved set's root once per epoch. Couriers need a fresh root to carry proofs.</p>
+    <dl class="lg-figs st-postman">
+      <div><dt>Answering</dt><dd data-s="postman.reachable">—</dd></div>
+      <div><dt>Last root published</dt><dd data-s="postman.age">—</dd></div>
+      <div><dt>Epoch length</dt><dd data-s="postman.epoch">—</dd></div>
+      <div><dt>Deposits approved</dt><dd data-s="postman.approved">—</dd></div>
+    </dl>
+  </div>
+</section>
+
+<section id="couriers" class="lg-band lg-band-paper" aria-labelledby="couriers-title">
+  <div class="wrap">
+    <h2 id="couriers-title" class="lg-h2">Couriers</h2>
+    <p class="intro">Anyone can run one by bonding ZC. They carry proofs to the chain so your wallet never has to, and a courier that breaks a signed promise loses part of its bond.</p>
+    <table class="st-table">
+      <caption class="sr">Bonded couriers</caption>
+      <thead><tr><th scope="col">Courier</th><th scope="col">Bond</th><th scope="col">Answering</th><th scope="col">Last job</th><th scope="col">Version</th></tr></thead>
+      <tbody data-s="couriers">
+        <tr class="st-empty"><td colspan="5">Couriers appear here once they bond, at launch.</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section id="read" class="lg-band" aria-labelledby="read-title">
+  <div class="wrap">
+    <h2 id="read-title" class="lg-h2">How to read this</h2>
+    <ul class="points lg-points">
+      <li><h3>Answering</h3><p>The service replied to a health check within four seconds. A courier that doesn't answer can't take your job, and the wallet picks another.</p></li>
+      <li><h3>Last root published</h3><p>How long ago the postman published an approved-deposit root, read from the chain. It should stay under one epoch; if it doesn't, new deposits wait, and anyone can still take theirs back with a ragequit.</p></li>
+      <li><h3>Last job</h3><p>When a courier last sent anything, its own cover traffic included, to the minute. It says nothing about whose job it was.</p></li>
+      <li><h3>Bond</h3><p>The ZC a courier has at stake. Leaving takes 14 days, so a broken promise can still be reported. Couriers that are leaving are marked and not checked.</p></li>
+    </ul>
+    <p class="lg-fine">Read from Ethereum and from each service's public health check, once a minute, by api.zipcoin.org.</p>
+  </div>
+</section>
+
+<nav class="pager wrap" aria-label="More">
+  <a class="pager-prev" href="/privacy-meter/">← Privacy meter</a>
+  <a class="pager-hub" href="/learn/couriers/">About couriers</a>
+  <a class="pager-next" href="/ledger/">The ledger →</a>
+</nav>
+
+</main>
+
+<!--part:footer-->
+</body>
+</html>

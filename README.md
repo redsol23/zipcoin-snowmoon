@@ -27,6 +27,10 @@ residents are AI agents going about their day on zipcoin.
 | Paid polling for common knowledge (ch. 27) | Burn to ask a group; members answer once, anonymously, and get paid for it | `ZipPolls` |
 | Paid anonymous rebroadcasting (ch. 15) | Couriers carry proofs for a fee and are slashed if they break a promise | `ZipCouriers` |
 
+ZC pays its holders ETH rewards. The pool passes its share to the project treasury (a Safe), and merchant stakes,
+courier bonds and badge locks share theirs with their stakers (`ZcRewardsHarvester`). The treasury's share of the sales
+tax is planned to become ZC liquidity in fixed bands above the launch range, never below it (`ZipLiquidityBands`).
+
 Every feature spends from **one** privacy pool, so every meal, send, burn and vote grows the crowd that hides everyone
 else.
 
@@ -38,7 +42,8 @@ describes "a stronger decentralized layer in the middle between users and a chai
 
 - Couriers stake ZC and relay proofs, so users never pay gas from a wallet that could identify them.
 - They can hold a proof and send it at a random moment, so its timing says nothing. A signed receipt makes the promise
-  enforceable: if they don't deliver while delivery was possible, anyone can slash them.
+  enforceable: if they miss the deadline, anyone can deliver the job through ZipCouriers and slash them for it, which
+  only works while the job can still be delivered.
 - They serve pool state that anyone can check against the chain's own roots, so no courier has to be trusted.
 - They generate cover traffic, and Veridia's residents are the richest cover of all: their everyday lives are real pool
   activity. Pool actions only, never token trades.
@@ -60,9 +65,14 @@ packages/sdk/       keys, note recovery, proving (snarkjs + the 0xbow ceremony f
                     pool indexer, payload codecs, Semaphore group helpers
 apps/postman/       association set provider: screens deposits, publishes approval roots on fixed epochs
 apps/courier/       courier node: relay, held proofs with signed receipts, cover traffic, doorstep notifications
-apps/veridia/       the residents (Claude, or a scripted mind when no credentials are set)
-apps/web/           the Veridia site and the wallet (in-browser proving)
-scripts/            local chain + services, and the publishing guard
+apps/veridia/       the residents (DeepSeek, or a scripted mind when no key is set)
+apps/web/           the Veridia site, the wallet (in-browser proving) and Emerald, the wallet's assistant
+apps/stats/         read-only API behind zipcoin.org's ledger, privacy meter and status pages
+apps/archive/       the Mountain Archive: a demo API paid privately over x402
+site/               zipcoin.org (static, no third-party requests)
+deploy/, docker/    one-box deployment: Docker Compose behind a Cloudflare Tunnel, backups, health checks
+docs/               deploy runbook, gas table, security notes on the privacy pool
+scripts/            local chain + services, end-to-end story, mainnet and Sepolia deploy scripts, the publishing guard
 ```
 
 ## Run it locally
@@ -74,19 +84,22 @@ git clone --recursive https://github.com/redsol23/zipcoin-snowmoon && cd zipcoin
 pnpm install
 (cd contracts && forge build && forge test)   # real zero-knowledge proofs, generated through FFI
 ./scripts/local-up.sh                         # local chain on :8546 and a full deployment
-./scripts/local-services.sh                   # postman :8710, courier :8720, Veridia :8730
-DEPLOYMENT=contracts/deployments/local.json pnpm --filter @zipnet/web dev   # http://localhost:3100
+./scripts/local-services.sh                   # postman :8710, courier :8720, Veridia :8730, archive :8740, web http://localhost:3100
+./scripts/local-services.sh stop              # stops them all again (status, clean: see the script)
 ```
 
+`COURIER2=1 ./scripts/local-services.sh` adds a second bonded courier on :8722. `./scripts/e2e.sh` runs the whole story
+on a fresh local chain and writes the gas table (docs/GAS.md).
+
 The web app's wallet offers a one-click dev wallet with a faucet on local chains. To let the residents think with
-Claude instead of the scripted mind, set Anthropic credentials and `VERIDIA_LLM=auto`.
+DeepSeek instead of the scripted mind, set `DEEPSEEK_API_KEY` and `VERIDIA_LLM=auto`.
 
 ## Status
 
-Built and tested locally: all contracts, the SDK, postman, courier, Veridia and the web app, including the wallet
-(zip, send, links, pay, unzip, speak, knock) with proofs generated in the browser. Not yet deployed to mainnet; the
-contracts need an external review first. Next: badges and polls in the wallet, then Emerald (a personal wallet agent)
-and private agent payments over x402, then a fully animated Veridia.
+Built and tested locally: all contracts, the SDK, postman, courier, Veridia, the stats API and the web app, including
+the wallet with proofs generated in the browser. The privacy pool has its own test suite (differential against
+upstream, invariants, real proofs and a mainnet fork; see docs/SECURITY.md). Not yet deployed to mainnet; the contracts
+need an external review first. The deploy tooling (docs/DEPLOY.md) refuses every silent fallback on mainnet.
 
 ## Safety
 

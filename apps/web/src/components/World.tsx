@@ -4,7 +4,7 @@ import clsx from "clsx";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 
-import { CITIES, footnote, tone, type Resident, type WorldEvent } from "@/lib/veridia";
+import { BEHIND, CITIES, footnote, tone, type Resident, type WorldEvent } from "@/lib/veridia";
 
 import { Portrait } from "./Portrait";
 
@@ -29,7 +29,8 @@ function Paragraph({ e, residents }: { e: WorldEvent; residents: Map<string, Res
   const r = residents.get(e.who);
   const note = footnote(e);
   const t = tone(e.action);
-  const time = new Date(e.at).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
+  // Roughly when it happened, as the story tells it; never the exact time
+  const time = e.when ? e.when[0].toUpperCase() + e.when.slice(1) : "Just now";
   return (
     <article className="relative grid grid-cols-[2.25rem_1fr] gap-x-3 py-3">
       <div className="pt-1.5">
@@ -38,7 +39,7 @@ function Paragraph({ e, residents }: { e: WorldEvent; residents: Map<string, Res
       <div>
         <p className="font-story text-[1.19rem] leading-[1.6] text-pine">{e.line}</p>
         <p className="mt-1 text-[0.82rem] leading-snug text-lichen">
-          <time className="tabular-nums">{time}</time>
+          <span>{time}</span>
           {r && (
             <>
               {", "}
@@ -48,7 +49,6 @@ function Paragraph({ e, residents }: { e: WorldEvent; residents: Map<string, Res
             </>
           )}
           {note && <>. {note}</>}
-          {e.tx && <span className="sr-only"> Transaction {e.tx}</span>}
         </p>
       </div>
     </article>
@@ -67,13 +67,14 @@ export function Chapter({ residents, who }: { residents: Resident[]; who?: strin
         </p>
       )}
       {shown.length === 0 && status !== "down" && (
-        <p className="font-story text-lg italic text-lichen">Morning in Veridia. The first residents are waking up…</p>
+        <p className="font-story text-lg italic text-lichen">The residents are up and about. The story catches up with them a little later…</p>
       )}
       <div className="divide-y divide-frost/70">
         {shown.map((e, i) => (
           <Paragraph key={`${e.at}-${e.who}-${i}`} e={e} residents={byId} />
         ))}
       </div>
+      {shown.length > 0 && <p className="mt-4 text-[0.82rem] text-lichen">{BEHIND}</p>}
     </section>
   );
 }
@@ -133,7 +134,7 @@ export function CityMap({ residents }: { residents: Resident[] }) {
         })}
       </svg>
       <figcaption className="mt-2 text-[0.82rem] text-lichen">
-        A circle lights up when someone acts: green for private payments, gold for coins burned to be heard, slate for anonymous posts and polls.
+        A circle lights up when the story reaches someone: green for private payments, gold for coins burned to be heard, slate for anonymous posts and polls. {BEHIND}
       </figcaption>
     </figure>
   );

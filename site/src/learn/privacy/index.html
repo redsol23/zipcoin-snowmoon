@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Privacy: zipcoin</title>
+<meta name="description" content="How a shared pool and a zero-knowledge proof keep who paid private, and where the limits are.">
+<link rel="canonical" href="https://zipcoin.org/learn/privacy/">
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#ECF0EC" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#101B1A" media="(prefers-color-scheme: dark)">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/favicon-32.png" type="image/png" sizes="32x32">
+<link rel="manifest" href="/site.webmanifest">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="preload" href="/fonts/newsreader-display.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/fonts/newsreader-text.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="/styles.css">
+<script src="/main.js" defer></script>
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="zipcoin">
+<meta property="og:url" content="https://zipcoin.org/learn/privacy/">
+<meta property="og:title" content="Privacy">
+<meta property="og:description" content="How a shared pool and a zero-knowledge proof keep who paid private, and where the limits are.">
+<meta property="og:image" content="https://zipcoin.org/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="A snow moon over a winter valley with stone houses, and the words: the private money of Snowmoon, on Ethereum.">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Privacy">
+<meta name="twitter:description" content="How a shared pool and a zero-knowledge proof keep who paid private, and where the limits are.">
+<meta name="twitter:image" content="https://zipcoin.org/og.png">
+<meta name="twitter:image:alt" content="A snow moon over a winter valley with stone houses, and the words: the private money of Snowmoon, on Ethereum.">
+</head>
+<body class="page-learn">
+<a class="skip" href="#main">Skip to content</a>
+<!--art:defs-->
+
+<!--part:header-->
+
+<main id="main">
+
+<section class="page-head page-head-topic" aria-labelledby="topic-title">
+  <div class="wrap">
+    <p class="crumb"><a href="/learn/">How it works</a></p>
+    <h1 id="topic-title">Privacy</h1>
+    <p class="intro">How a shared pool and a zero-knowledge proof keep who paid private, and where the limits are.</p>
+  </div>
+</section>
+
+<section id="how" class="band how" aria-labelledby="how-title">
+  <div class="wrap grid">
+    <header class="how-head">
+      <h2 id="how-title">How zipping works</h2>
+      <figure class="quote">
+        <blockquote><p>Only Gladias and the restaurant knew that a 10.5 zipcoin order had been made.</p></blockquote>
+        <figcaption><cite>Snowmoon</cite>, chapter 6</figcaption>
+      </figure>
+    </header>
+    <p class="intro how-intro">On a public blockchain, every payment is normally visible to everyone, forever. Zipcoin gets the novel's privacy by letting everyone share one pool, so a payment can prove it's backed by real coins without saying whose.</p>
+
+    <ol class="flow">
+      <li>
+        <!--art:step-zip-->
+        <h3>Zip</h3>
+        <p>You move ZC into one shared pool. The deposit itself is public, like walking into a crowded square: people see you arrive.</p>
+      </li>
+      <li>
+        <!--art:step-crowd-->
+        <h3>Join the crowd</h3>
+        <p>Inside, your coins become a note among everyone else's. Each note is a secret only its owner holds.</p>
+      </li>
+      <li>
+        <!--art:step-prove-->
+        <h3>Spend with a proof</h3>
+        <p>To pay, your wallet makes a zero-knowledge proof, a short piece of math that shows you own <em>some</em> note in the pool without saying which. The amount is public; who paid is not.</p>
+      </li>
+      <li>
+        <!--art:step-paid-->
+        <h3>The merchant and the tax are paid</h3>
+        <p>One proof pays the shop and the sales tax at once. The tax splits on the spot: part is burned, part pays the couriers, the rest goes to a treasury.</p>
+      </li>
+    </ol>
+
+    <div class="explainer">
+      <h3>Why a bigger crowd hides everyone</h3>
+      <p>A proof says, in effect, “one of these notes is mine.” In a pool of ten notes, that narrows it to ten people. In a pool of ten thousand, it narrows it to almost nothing.</p>
+      <p>That's why every feature here spends from the same single pool. Every meal, send, burn and vote makes the crowd bigger, and hides everyone else a little better.</p>
+    </div>
+    <div class="explainer">
+      <h3>The postman</h3>
+      <p>A shared pool shouldn't become a hiding place for stolen money. So new deposits wait for the postman, a service that screens them and publishes the list of approved deposits on a fixed schedule. When you spend, your proof also shows that your note is on that list.</p>
+      <p>The postman can't take anyone's coins. If it never approves a deposit, the owner can always withdraw it publicly. That's called a ragequit.</p>
+    </div>
+  </div>
+</section>
+
+<section id="different" class="band different" aria-labelledby="different-title">
+  <div class="wrap grid">
+    <p class="different-link">What makes this different, in six lines: <a href="/#different">on the homepage</a>.</p>
+
+    <article id="pool" class="pool" aria-labelledby="pool-title">
+      <div class="pool-copy">
+        <h3 id="pool-title">Our pool: 0xbow Privacy Pools, tuned for ZC</h3>
+        <p>Zipcoin runs its own instance of 0xbow's Privacy Pools. Its privacy comes from that design: zero-knowledge proofs, association sets (the postman's list of approved deposits) and ragequit. 0xbow's contracts are open source, and 0xbow <a href="https://github.com/0xbow-io/privacy-pools-core/tree/main/audit">publishes audit reports</a> for its upstream contracts and circuits.</p>
+        <p>We add one deliberately small extension. ZC pays its holders rewards in ETH, and ZC sitting in an ordinary privacy pool would leave those rewards unclaimed for good. Our pool can claim them, anyone can trigger the claim, and the ETH goes straight to the project treasury (a multisig). The extension never touches deposits, balances or the anonymity set: the pool's accounting is unchanged.</p>
+        <p class="pool-disclose"><strong>Good to know.</strong> ZC pays its holders ETH rewards. While your ZC is zipped in the pool, those rewards go to the project treasury instead of to you.</p>
+      </div>
+      <div class="pool-art"><!--art:pool--></div>
+    </article>
+  </div>
+</section>
+
+<nav class="pager wrap" aria-label="More topics">
+  <a class="pager-prev" href="/learn/">← How it works</a>
+  <a class="pager-hub" href="/learn/">All topics</a>
+  <a class="pager-next" rel="next" href="/learn/tax/">Next: Sales tax →</a>
+</nav>
+
+</main>
+
+<!--part:footer-->
+</body>
+</html>

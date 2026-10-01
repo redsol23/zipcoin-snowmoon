@@ -2,10 +2,20 @@
   "name": "zipnet",
   "private": true,
   "packageManager": "pnpm@9.12.3",
-  "engines": { "node": ">=20" },
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
     "build:contracts": "cd contracts && forge build",
     "test:contracts": "cd contracts && forge test",
-    "typecheck": "pnpm -r typecheck"
+    "typecheck": "pnpm -r typecheck",
+    "e2e": "bash scripts/e2e.sh",
+    "test:postman": "pnpm --filter ./apps/postman test",
+    "deploy:check": "bash scripts/check-deploy.sh",
+    "deploy:sepolia:simulate": "bash scripts/deploy-sepolia.sh"
+  },
+  "devDependencies": {
+    "tsx": "^4.20.5",
+    "viem": "2.56.8"
   }
 }

@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sales tax: zipcoin</title>
+<meta name="description" content="How every payment settles its sales tax in the same proof, and what the treasury's share is planned to do.">
+<link rel="canonical" href="https://zipcoin.org/learn/tax/">
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#ECF0EC" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#101B1A" media="(prefers-color-scheme: dark)">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/favicon-32.png" type="image/png" sizes="32x32">
+<link rel="manifest" href="/site.webmanifest">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="preload" href="/fonts/newsreader-display.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/fonts/newsreader-text.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="/styles.css">
+<script src="/main.js" defer></script>
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="zipcoin">
+<meta property="og:url" content="https://zipcoin.org/learn/tax/">
+<meta property="og:title" content="Sales tax">
+<meta property="og:description" content="How every payment settles its sales tax in the same proof, and what the treasury's share is planned to do.">
+<meta property="og:image" content="https://zipcoin.org/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="A snow moon over a winter valley with stone houses, and the words: the private money of Snowmoon, on Ethereum.">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Sales tax">
+<meta name="twitter:description" content="How every payment settles its sales tax in the same proof, and what the treasury's share is planned to do.">
+<meta name="twitter:image" content="https://zipcoin.org/og.png">
+<meta name="twitter:image:alt" content="A snow moon over a winter valley with stone houses, and the words: the private money of Snowmoon, on Ethereum.">
+</head>
+<body class="page-learn">
+<a class="skip" href="#main">Skip to content</a>
+<!--art:defs-->
+
+<!--part:header-->
+
+<main id="main">
+
+<section class="page-head page-head-topic" aria-labelledby="topic-title">
+  <div class="wrap">
+    <p class="crumb"><a href="/learn/">How it works</a></p>
+    <h1 id="topic-title">Sales tax</h1>
+    <p class="intro">How every payment settles its sales tax in the same proof, and what the treasury's share is planned to do.</p>
+  </div>
+</section>
+
+<section id="tax" class="band tax" aria-labelledby="tax-title">
+  <div class="wrap">
+    <h2 id="tax-title">Paid in the same proof</h2>
+    <p class="intro">When you pay a shop, one zero-knowledge proof pays the shop and the sales tax together. The tax is settled on the spot, and nobody learns who paid.</p>
+    <ul class="tax-split">
+      <li><strong>Part is burned.</strong></li>
+      <li><strong>Part pays the couriers</strong> who carry proofs and keep the network private.</li>
+      <li><strong>The rest goes to the project treasury</strong>, a multisig.</li>
+    </ul>
+    <p class="tax-note">The rates are fixed when the contracts are deployed, and can't exceed 10%. Shops stake ZC, and a shop that asks to be paid around the tax can be slashed: see <a href="/learn/novel/">random inspection</a>.</p>
+    <article class="market" id="market" aria-labelledby="market-title">
+      <div>
+        <h3 id="market-title">Tax that keeps the market whole</h3>
+        <p>Planned: the treasury's share of the sales tax goes into ZC's pool as liquidity above the price range the launch position covers, automatically and by fixed rules, so the market keeps depth past the point where the launch position ends. Nothing is added below that range: ETH that reaches the bands goes to the treasury, not into the pool. The positions and their fees belong to the project treasury. This isn't price support, and it doesn't pay holders.</p>
+        <ul class="tax-split market-facts">
+          <li>The launch position covers roughly 2.9 to 2,875 ETH of fully diluted value.</li>
+          <li>The planned bands sit entirely above that range, never below it, so they take no fees from holders.</li>
+          <li>A contract with fixed bands makes the deposits, in ZC only; couriers trigger it.</li>
+          <li>The fees go to the project treasury, a multisig.</li>
+          <li>There's no discretion and no rebalancing.</li>
+        </ul>
+        <p class="plan"><strong>Planned, not live.</strong> It's being designed now, with no amounts or dates yet. Nothing here is investment advice.</p>
+      </div>
+      <figure class="market-art"><!--art:bands--></figure>
+    </article>
+  </div>
+</section>
+
+<nav class="pager wrap" aria-label="More topics">
+  <a class="pager-prev" rel="prev" href="/learn/privacy/">← Previous: Privacy</a>
+  <a class="pager-hub" href="/learn/">All topics</a>
+  <a class="pager-next" rel="next" href="/learn/couriers/">Next: Couriers →</a>
+</nav>
+
+</main>
+
+<!--part:footer-->
+</body>
+</html>

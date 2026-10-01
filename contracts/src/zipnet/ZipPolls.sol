@@ -7,6 +7,8 @@ import {ISemaphore} from '@semaphore-protocol/contracts/interfaces/ISemaphore.so
 import {ProofLib} from 'contracts/lib/ProofLib.sol';
 import {IPrivacyPool} from 'interfaces/IPrivacyPool.sol';
 
+import {SemaphoreNullifiers} from './SemaphoreNullifiers.sol';
+import {ZipEscrowHarvest} from './ZcHarvestToTreasury.sol';
 import {ZipProcessooor} from './ZipProcessooor.sol';
 
 /**
@@ -18,9 +20,11 @@ import {ZipProcessooor} from './ZipProcessooor.sol';
  * get paid to answer). Each member of the group votes once per poll with a Semaphore proof whose message binds the
  * option and the address paid for answering, so couriers can submit votes without being able to redirect rewards.
  * Unused escrow is burned at close rather than refunded, so an anonymous creator stays anonymous.
+ * A vote with `rewardTo = address(0)` takes no reward: nothing names an address next to the answer, and the reward it
+ * would have had is burned at once (A-4).
  * @dev `groupId` is any Semaphore group: a badge tier, a merchant's payers. No owner.
  */
-contract ZipPolls is ZipProcessooor {
+contract ZipPolls is ZipEscrowHarvest, SemaphoreNullifiers {
   using SafeERC20 for IERC20;
 
   struct Poll {
@@ -80,8 +84,8 @@ contract ZipPolls is ZipProcessooor {
     SEMAPHORE = _semaphore;
   }
 
-  function scopeOf(uint256 _pollId) public pure returns (uint256) {
-    return uint256(keccak256(abi.encode('zipnet.poll', _pollId)));
+  function scopeOf(uint256 _pollId) public view returns (uint256) {
+    return uint256(keccak256(abi.encode('zipnet.poll', address(this), block.chainid, _pollId)));
   }
 
   function messageOf(uint8 _option, address _rewardTo) public pure returns (uint256) {
@@ -123,12 +127,13 @@ contract ZipPolls is ZipProcessooor {
     if (_proof.scope != scopeOf(_pollId)) revert BadScope();
     if (_proof.message != messageOf(_option, _rewardTo)) revert BadMessage();
 
-    SEMAPHORE.validateProof(_p.groupId, _proof);
+    _consumeProof(SEMAPHORE, _p.groupId, _proof);
     tally[_pollId][_option] += 1;
     uint256 _reward;
     if (_p.votes < _p.maxVotes) {
       _reward = _p.rewardPerVote;
-      if (_reward != 0) ZC.safeTransfer(_rewardTo, _reward);
+      if (_reward != 0) ZC.safeTransfer(_rewardTo == address(0) ? BURN : _rewardTo, _reward);
+      if (_rewardTo == address(0)) _reward = 0;
     }
     _p.votes += 1;
     emit Voted(_pollId, _option, _proof.nullifier, _rewardTo, _reward);

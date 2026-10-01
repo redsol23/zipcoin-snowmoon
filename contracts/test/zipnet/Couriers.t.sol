@@ -61,8 +61,70 @@ contract CouriersTest is ZipnetBase {
     assertEq(zc.balanceOf(zven), 1000 ether);
   }
 
-  function _receipt(Note memory _n, uint64 _deadline) internal view returns (ZipCouriers.Receipt memory) {
-    return ZipCouriers.Receipt(mov, PoseidonT2.hash([_n.nullifier]), entrypoint.latestRoot(), pool.currentRoot(), _deadline);
+  // M-1 PoC, inverted: rewards earned before an unbond stay claimable, and the address can bond again
+  function test_m1_unbondAfterRewards_claimAndRebondStillWork() public {
+    zc.mint(address(couriers), 400 ether); // 300 to mov, 100 to zven
+    couriers.sync();
+
+    vm.prank(zven);
+    couriers.requestUnbond(); // settles: owed = 100, debt = 1000 * acc
+    vm.warp(block.timestamp + 14 days);
+    vm.prank(zven);
+    couriers.unbond();
+    assertEq(couriers.owed(zven), 100 ether);
+    assertEq(couriers.pending(zven), 100 ether);
+
+    vm.prank(zven);
+    assertEq(couriers.claim(), 100 ether);
+    assertEq(zc.balanceOf(zven), 1100 ether);
+
+    _bond(zven, 1000 ether); // no stale debt to underflow on
+    zc.mint(address(couriers), 400 ether);
+    couriers.sync();
+    assertEq(couriers.pending(zven), 100 ether);
+    assertEq(couriers.pending(mov), 600 ether);
+    vm.prank(mov);
+    couriers.claim();
+    vm.prank(zven);
+    couriers.claim();
+    assertEq(couriers.rewardReserve(), 0);
+  }
+
+  // L-4: tax that arrives while nobody is bonded is burned, not handed to whoever bonds next
+  function test_l4_taxWithNobodyBonded_isBurned_notTakenByTheFirstBonder() public {
+    ZipCouriers _c = new ZipCouriers(IPrivacyPool(address(pool)), 1000 ether);
+    zc.mint(address(_c), 500 ether); // tax, nobody bonded
+    uint256 _burned = zc.balanceOf(BURN);
+
+    zc.mint(zven, 1000 ether);
+    vm.startPrank(zven);
+    zc.approve(address(_c), 1000 ether);
+    _c.bond(1000 ether, 'x');
+    vm.stopPrank();
+    _c.sync();
+
+    assertEq(_c.pending(zven), 0, 'first bonder earns nothing from before it bonded');
+    assertEq(zc.balanceOf(BURN), _burned + 500 ether);
+  }
+
+  /// @dev A held relay job: the call the courier promised to make, and its receipt
+  struct Job {
+    ZipCouriers.Receipt receipt;
+    address target;
+    bytes callData;
+    IPrivacyPool.Withdrawal withdrawal;
+    ProofLib.WithdrawProof proof;
+  }
+
+  function _relayJob(Note memory _n, address _dest, uint64 _deadline) internal returns (Job memory _j) {
+    _j.withdrawal = IPrivacyPool.Withdrawal(
+      address(entrypoint), abi.encode(IEntrypoint.RelayData({recipient: _dest, feeRecipient: mov, relayFeeBPS: 0}))
+    );
+    (_j.proof,) = _prove(_n, _n.value, _j.withdrawal);
+    _j.target = address(entrypoint);
+    _j.callData = abi.encodeCall(entrypoint.relay, (_j.withdrawal, _j.proof, scope));
+    _j.receipt =
+      ZipCouriers.Receipt(mov, PoseidonT2.hash([_n.nullifier]), couriers.jobHashOf(_j.target, _j.callData), _deadline);
   }
 
   function _sign(ZipCouriers.Receipt memory _r) internal view returns (bytes memory) {
@@ -70,50 +132,69 @@ contract CouriersTest is ZipnetBase {
     return abi.encodePacked(_rr, _s, _v);
   }
 
-  function test_slash_whenPromisedDeliveryWasPossibleButMissed() public {
-    Note memory _n = _zip(makeAddr('user'), 10 ether);
-    ZipCouriers.Receipt memory _r = _receipt(_n, uint64(block.timestamp + 1 hours));
-    bytes memory _sig = _sign(_r);
+  /// @dev Commit step of a report by `_reporter`; the reveal is valid from the next block
+  function _commit(address _reporter, ZipCouriers.Receipt memory _r) internal {
+    vm.prank(_reporter);
+    couriers.commitReport(couriers.reportCommitment(couriers.receiptDigest(_r), _reporter, 0));
+    vm.roll(block.number + 1);
+  }
 
-    vm.expectRevert(ZipCouriers.NotSlashable.selector);
-    couriers.report(_r, _sig);
+  function test_slash_whenPromisedDeliveryWasPossibleButMissed_andTheReportDelivers() public {
+    Note memory _n = _zip(makeAddr('user'), 10 ether);
+    address _dest = makeAddr('dest');
+    Job memory _j = _relayJob(_n, _dest, uint64(block.timestamp + 1 hours));
+    bytes memory _sig = _sign(_j.receipt);
+    address _reporter = makeAddr('reporter');
+    _commit(_reporter, _j.receipt);
+
+    vm.prank(_reporter);
+    vm.expectRevert(ZipCouriers.NotSlashable.selector); // before the deadline
+    couriers.report(_j.receipt, _sig, 0, _j.target, _j.callData);
 
     vm.warp(block.timestamp + 2 hours);
-    address _reporter = makeAddr('reporter');
+    // M-8: copying the reveal from the mempool doesn't work without an older commitment of one's own
+    vm.prank(makeAddr('copier'));
+    vm.expectRevert(ZipCouriers.NotCommitted.selector);
+    couriers.report(_j.receipt, _sig, 0, _j.target, _j.callData);
+    // H-1: the call must be the one the receipt names
     vm.prank(_reporter);
-    couriers.report(_r, _sig);
+    vm.expectRevert(ZipCouriers.WrongJob.selector);
+    couriers.report(_j.receipt, _sig, 0, _j.target, abi.encodePacked(_j.callData, uint8(0)));
+
+    vm.prank(_reporter);
+    couriers.report(_j.receipt, _sig, 0, _j.target, _j.callData);
     assertEq(zc.balanceOf(_reporter), 150 ether); // half of 10% of 3000
     (uint256 _stake,,) = couriers.couriers(mov);
     assertEq(_stake, 2700 ether);
+    assertEq(zc.balanceOf(_dest), 10 ether, 'the report delivered the job: the user got its withdrawal');
+    assertTrue(pool.nullifierHashes(_j.receipt.nullifierHash));
 
+    vm.prank(_reporter);
     vm.expectRevert(ZipCouriers.AlreadyReported.selector);
-    couriers.report(_r, _sig);
+    couriers.report(_j.receipt, _sig, 0, _j.target, _j.callData);
   }
 
   function test_noSlash_whenAspRootMovedOn() public {
     Note memory _n = _zip(makeAddr('user'), 10 ether);
-    ZipCouriers.Receipt memory _r = _receipt(_n, uint64(block.timestamp + 1 hours));
-    bytes memory _sig = _sign(_r);
+    Job memory _j = _relayJob(_n, makeAddr('dest'), uint64(block.timestamp + 1 hours));
+    bytes memory _sig = _sign(_j.receipt);
     _zip(makeAddr('other'), 10 ether); // pushes a new ASP root: the held proof went stale, not the courier's fault
     vm.warp(block.timestamp + 2 hours);
+    _commit(address(this), _j.receipt);
     vm.expectRevert(ZipCouriers.NotSlashable.selector);
-    couriers.report(_r, _sig);
+    couriers.report(_j.receipt, _sig, 0, _j.target, _j.callData);
   }
 
   function test_noSlash_whenDelivered() public {
     Note memory _n = _zip(makeAddr('user'), 10 ether);
-    ZipCouriers.Receipt memory _r = _receipt(_n, uint64(block.timestamp + 1 hours));
-    bytes memory _sig = _sign(_r);
-
-    IPrivacyPool.Withdrawal memory _w = IPrivacyPool.Withdrawal(
-      address(entrypoint), abi.encode(IEntrypoint.RelayData({recipient: makeAddr('dest'), feeRecipient: mov, relayFeeBPS: 0}))
-    );
-    (ProofLib.WithdrawProof memory _p,) = _prove(_n, 10 ether, _w);
+    Job memory _j = _relayJob(_n, makeAddr('dest'), uint64(block.timestamp + 1 hours));
+    bytes memory _sig = _sign(_j.receipt);
     vm.prank(mov);
-    entrypoint.relay(_w, _p, scope);
+    entrypoint.relay(_j.withdrawal, _j.proof, scope);
 
     vm.warp(block.timestamp + 2 hours);
+    _commit(address(this), _j.receipt);
     vm.expectRevert(ZipCouriers.NotSlashable.selector);
-    couriers.report(_r, _sig);
+    couriers.report(_j.receipt, _sig, 0, _j.target, _j.callData);
   }
 }

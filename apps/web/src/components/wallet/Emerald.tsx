@@ -2,13 +2,16 @@
 
 import { zipAddressRegistryAbi, zipBadgesAbi, zipPayAbi } from "@zipnet/sdk";
 import clsx from "clsx";
-import { useRef, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { formatEther, isAddress, parseAbiItem, parseEther, type Address, type Hex } from "viem";
 
 import { doKnock, doPay, doSend, doSpeak, doUnzip, doZip, type Ctx } from "@/lib/actions";
+import { runFeatureRead, type FeatureCtx } from "@/lib/emerald/features";
+import { isFeatureReadTool, parseBaseProposal } from "@/lib/emerald/tools";
 
 import { useShops, type Shop } from "./Actions";
-import { Button, inputCls } from "./ui";
+import { EmeraldGate, useGateOptions, type Access } from "./EmeraldGate";
+import { Button, errorText, inputCls } from "./ui";
 import { useCtx, useWallet } from "./WalletProvider";
 
 /**
@@ -17,12 +20,12 @@ import { useCtx, useWallet } from "./WalletProvider";
  * says, never keys or note secrets. Emerald can only propose; a card waits for the person to confirm.
  */
 
-type Block =
-  | { type: "text"; text: string }
-  | { type: "tool_use"; id: string; name: string; input: Record<string, unknown> }
-  | { type: "tool_result"; tool_use_id: string; content: string }
-  | { type: string; [k: string]: unknown };
-type Msg = { role: "user" | "assistant"; content: string | Block[] };
+/** The conversation in the OpenAI chat format DeepSeek speaks; assistant turns are kept exactly as returned. */
+type ToolCall = { id: string; type: "function"; function: { name: string; arguments: string } };
+type Msg =
+  | { role: "user"; content: string }
+  | { role: "assistant"; content: string | null; reasoning_content?: string; tool_calls?: ToolCall[] }
+  | { role: "tool"; tool_call_id: string; content: string };
 
 type Proposal = {
   id: string;
@@ -67,20 +70,18 @@ async function runTool(name: string, input: Record<string, unknown>, c: Ctx, w: 
     case "check_recipient": {
       const a = String(input.address ?? "");
       if (!isAddress(a)) return { valid: false, note: "Not an Ethereum address." };
-      const [code, key, cast] = await Promise.all([
+      // Veridia residents' wallets are deliberately not listed anywhere, so they can't be recognized here either
+      const [code, key] = await Promise.all([
         c.pub.getCode({ address: a }),
         c.pub.readContract({ address: dep.addressRegistry, abi: zipAddressRegistryAbi, functionName: "keyOf", args: [a] }) as Promise<Hex>,
-        fetch("/api/veridia/cast").then((r) => r.json() as Promise<{ name: string; wallet: string; shop?: string }[]>).catch(() => []),
       ]);
       const shop = shops.find((s) => s.payout.toLowerCase() === a.toLowerCase());
-      const resident = cast.find((r) => r.wallet.toLowerCase() === a.toLowerCase());
       return {
         valid: true,
         is_you: w.address?.toLowerCase() === a.toLowerCase(),
         is_contract: !!code && code !== "0x",
         has_zip_address: !/^0x0*$/.test(key),
         merchant: shop ? { id: shop.id.toString(), name: shop.name } : null,
-        veridia_resident: resident ? resident.name : null,
       };
     }
     case "list_merchants": {
@@ -152,6 +153,15 @@ async function execute(p: Proposal, c: Ctx, me: Address | null) {
   }
 }
 
+const TOOL_LABEL: Record<string, string> = {
+  "check recipient": "checked the address",
+  "get wallet": "looked at your wallet",
+  "read inbox": "read your inbox",
+  "pool activity": "looked at the pool",
+  "list merchants": "looked at the merchants",
+  "parked payouts": "looked for parked payouts",
+};
+
 const LABEL: Record<Proposal["action"], string> = { zip: "Zip", send: "Send privately", send_link: "Make a link", pay: "Pay", unzip: "Unzip", speak: "Burn and speak", knock: "Burn at their door" };
 
 export function Emerald() {
@@ -164,38 +174,70 @@ export function Emerald() {
   const [thinking, setThinking] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const end = useRef<HTMLDivElement>(null);
+  const gate = useGateOptions();
+  // In memory only (never localStorage): a closed tab is a signed-out Emerald
+  const access = useRef<Access | null>(null);
+  const [accessKind, setAccessKind] = useState<Access["kind"] | null>(null);
+  const grant = useCallback((a: Access | null) => {
+    access.current = a;
+    setAccessKind(a?.kind ?? null);
+  }, []);
+
+  /** One model step, carrying the session token the gate gave us. */
+  const step = async (history: Msg[]) => {
+    const a = access.current;
+    const headers: Record<string, string> = { "content-type": "application/json" };
+    if (a) headers.authorization = `Bearer ${a.token}`;
+    const res = await fetch("/api/emerald", { method: "POST", headers, body: JSON.stringify({ messages: history }) });
+    const j = (await res.json()) as { message?: Msg; finish_reason?: string; error?: string };
+    if (res.status === 401 || res.status === 403) {
+      grant(null);
+      throw new Error(j.error ?? "Emerald needs you to sign in again.");
+    }
+    if (!res.ok || !j.message) throw new Error(j.error ?? "Emerald couldn't answer.");
+    return j as { message: Extract<Msg, { role: "assistant" }>; finish_reason?: string };
+  };
 
   const ask = async (text: string) => {
-    if (!ctx || !text.trim()) return;
+    if (!ctx || !text.trim() || !access.current) return;
     setError(null);
     setThinking(true);
     let history: Msg[] = [...msgs, { role: "user", content: text.trim() }];
     setMsgs(history);
     setInput("");
     try {
-      for (let step = 0; step < 8; step++) {
-        const res = await fetch("/api/emerald", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ messages: history }) });
-        const j = (await res.json()) as { content?: Block[]; stop_reason?: string; error?: string };
-        if (!res.ok || !j.content) throw new Error(j.error ?? "Emerald couldn't answer.");
-        // Append the assistant turn exactly as returned; the history must never be edited
-        history = [...history, { role: "assistant", content: j.content }];
+      for (let n = 0; n < 8; n++) {
+        const j = await step(history);
+        // Append the assistant turn exactly as returned (reasoning_content included); the history is never edited
+        history = [...history, j.message];
         setMsgs(history);
-        if (j.stop_reason === "refusal") throw new Error("Emerald can't help with that one.");
-        if (j.stop_reason !== "tool_use") break;
-        const results: Block[] = [];
-        for (const b of j.content) {
-          if (b.type !== "tool_use") continue;
-          const t = b as { id: string; name: string; input: Record<string, unknown> };
-          if (t.name === "propose_action") setProposals((ps) => [...ps, { ...(t.input as Omit<Proposal, "id" | "state">), id: t.id, state: "open" }]);
+        if (j.finish_reason === "content_filter") throw new Error("Emerald can't help with that one.");
+        const calls = j.message.tool_calls ?? [];
+        if (!calls.length) break;
+        const results: Msg[] = [];
+        for (const call of calls) {
+          const t = { id: call.id, name: call.function.name, input: {} as Record<string, unknown> };
           let out: unknown;
           try {
-            out = await runTool(t.name, t.input, ctx, w, shops);
+            try {
+              t.input = JSON.parse(call.function.arguments || "{}") as Record<string, unknown>;
+            } catch {
+              throw new Error("Those tool arguments weren't valid JSON; call the tool again.");
+            }
+            if (t.name === "propose_action") {
+              const parsed = parseBaseProposal(t.input);
+              if (parsed.ok) setProposals((ps) => [...ps, { ...parsed.proposal, id: t.id, state: "open" }]);
+              out = parsed.ok
+                ? { shown: true, note: "The person sees a card and will confirm or dismiss it themselves. Don't say it happened." }
+                : { shown: false, rejected: parsed.error };
+            } else if (isFeatureReadTool(t.name)) out = await runFeatureRead(t.name, featureCtx(ctx));
+            else out = await runTool(t.name, t.input, ctx, w, shops);
           } catch (e) {
-            out = { error: (e as Error).message.split("\n")[0] };
+            out = { error: errorText(e) };
           }
-          results.push({ type: "tool_result", tool_use_id: t.id, content: JSON.stringify(out) });
+          results.push({ role: "tool", tool_call_id: t.id, content: JSON.stringify(out) });
         }
-        history = [...history, { role: "user", content: results }];
+        history = [...history, ...results];
         setMsgs(history);
       }
     } catch (e) {
@@ -206,6 +248,8 @@ export function Emerald() {
     }
   };
 
+  const featureCtx = (c: Ctx): FeatureCtx => ({ ...c, locks: w.locks });
+
   const confirm = async (p: Proposal) => {
     if (!ctx) return;
     setProposals((ps) => ps.map((x) => (x.id === p.id ? { ...x, state: "running" } : x)));
@@ -213,22 +257,27 @@ export function Emerald() {
       const d = await execute(p, ctx, w.address);
       setProposals((ps) => ps.map((x) => (x.id === p.id ? { ...x, state: "done", result: d.text, link: d.link } : x)));
     } catch (e) {
-      setProposals((ps) => ps.map((x) => (x.id === p.id ? { ...x, state: "failed", result: (e as Error).message.split("\n")[0] } : x)));
+      setProposals((ps) => ps.map((x) => (x.id === p.id ? { ...x, state: "failed", result: errorText(e) } : x)));
     }
   };
 
   type Item = { key: string; who: "user" | "assistant"; text: string; tool: string | null; proposal: Proposal | null };
   const visible: Item[] = msgs.flatMap((m, i): Item[] => {
-    if (typeof m.content === "string") return [{ key: `${i}`, who: m.role, text: m.content, tool: null, proposal: null }];
-    return m.content.flatMap((b, k): Item[] => {
-      if (b.type === "text" && (b as { text: string }).text.trim()) return [{ key: `${i}-${k}`, who: m.role, text: (b as { text: string }).text, tool: null, proposal: null }];
-      if (b.type === "tool_use") {
-        const t = b as { id: string; name: string };
-        if (t.name === "propose_action") return [{ key: `${i}-${k}`, who: "assistant" as const, text: "", tool: null, proposal: proposals.find((p) => p.id === t.id) ?? null }];
-        return [{ key: `${i}-${k}`, who: "assistant" as const, text: "", tool: t.name.replace(/_/g, " "), proposal: null }];
-      }
-      return [];
-    });
+    if (m.role === "user") return [{ key: `${i}`, who: "user", text: m.content, tool: null, proposal: null }];
+    if (m.role === "tool") return [];
+    const text: Item[] = m.content?.trim() ? [{ key: `${i}`, who: "assistant", text: m.content, tool: null, proposal: null }] : [];
+    return [
+      ...text,
+      ...(m.tool_calls ?? []).flatMap((c, k): Item[] => {
+        const key = `${i}-${k}`;
+        const name = c.function.name;
+        if (name === "propose_action") {
+          const proposal = proposals.find((p) => p.id === c.id);
+          return proposal ? [{ key, who: "assistant", text: "", tool: null, proposal }] : [];
+        }
+        return [{ key, who: "assistant", text: "", tool: name.replace(/_/g, " "), proposal: null }];
+      }),
+    ];
   });
 
   return (
@@ -237,10 +286,20 @@ export function Emerald() {
         Emerald checks an address before you pay, tells you what&apos;s new at your door, and suggests how to time things. It can
         only propose; nothing moves until you confirm. It sees what its tools report about your wallet, never your keys.
       </p>
+      {gate.error && <p className="mt-6 rounded-md bg-candle/15 px-3 py-2 text-sm">{gate.error}</p>}
+      {gate.options && !accessKind && <EmeraldGate options={gate.options} ctx={ctx} onAccess={grant} />}
+      {accessKind && (
+        <p className="mt-4 text-[0.8rem] text-lichen">
+          {accessKind === "badge" ? "Signed in anonymously with a badge." : "Signed in with your wallet (this links it to Emerald)."}{" "}
+          <button className="underline underline-offset-2" onClick={() => grant(null)}>
+            Sign out
+          </button>
+        </p>
+      )}
       <div className="mt-6 space-y-4">
         {visible.length === 0 && (
           <div className="flex flex-wrap gap-2">
-            {["What's new at my door?", "Is 0x… a real merchant?", "Send 20 ZC to Seila privately", "When should I unzip to stay private?"].map((s) => (
+            {["What's new at my door?", "Is 0x… a real merchant?", "Send 20 ZC to Seila privately", "When should I unzip to stay private?", "Is anything of mine parked?"].map((s) => (
               <button key={s} onClick={() => setInput(s)} className="rounded-full border border-frost px-3 py-1 text-sm hover:border-pine">
                 {s}
               </button>
@@ -252,7 +311,7 @@ export function Emerald() {
             <ProposalCard key={v.key} p={v.proposal} shops={shops} onConfirm={confirm} onDismiss={(p) => setProposals((ps) => ps.map((x) => (x.id === p.id ? { ...x, state: "dismissed" } : x)))} />
           ) : v.tool ? (
             <p key={v.key} className="text-[0.8rem] italic text-lichen">
-              Emerald {v.tool === "check recipient" ? "checked the address" : v.tool === "get wallet" ? "looked at your wallet" : v.tool === "read inbox" ? "read your inbox" : v.tool === "pool activity" ? "looked at the pool" : "looked at the merchants"}.
+              Emerald {TOOL_LABEL[v.tool] ?? "looked something up"}.
             </p>
           ) : v.who === "user" ? (
             <p key={v.key} className="ml-auto max-w-[85%] rounded-md bg-drift px-3 py-2">
@@ -276,7 +335,7 @@ export function Emerald() {
         className="mt-6 flex gap-2"
       >
         <input className={inputCls} placeholder="Ask Emerald" value={input} onChange={(e) => setInput(e.target.value)} disabled={thinking} aria-label="Ask Emerald" />
-        <Button type="submit" busy={thinking} disabled={!input.trim()}>
+        <Button type="submit" busy={thinking} disabled={!input.trim() || !accessKind}>
           Ask
         </Button>
       </form>

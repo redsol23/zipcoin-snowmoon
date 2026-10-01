@@ -3,6 +3,7 @@
 import { encodeRelay, encodeSend, hashNullifier, hashPrecommitment, parseZipLink, randomSecrets, sealSecrets, type Note } from "@zipnet/sdk";
 import { useEffect, useMemo, useState } from "react";
 
+import { ConnectPicker } from "@/components/wallet/ConnectPicker";
 import { Button, Result, zc, type Outcome } from "@/components/wallet/ui";
 import { useWallet } from "@/components/wallet/WalletProvider";
 import { courierQuote, spend } from "@/lib/wallet";
@@ -70,13 +71,9 @@ export default function Claim() {
             Nobody but you and the sender knows this link exists. Take the coins to a wallet, or keep them zipped under your own key.
           </p>
           {!w.address && (
-            <div className="mt-6 flex flex-wrap gap-3">
-              <Button onClick={() => w.connectInjected().catch((e) => setOut({ tone: "error", text: e.message }))}>Connect wallet</Button>
-              {w.config?.devWallet && (
-                <Button tone="quiet" onClick={() => w.connectDev().catch((e) => setOut({ tone: "error", text: e.message }))}>
-                  Use a dev wallet
-                </Button>
-              )}
+            <div className="mt-6">
+              <p className="mb-2 text-sm text-lichen">Connect a wallet to receive the coins:</p>
+              <ConnectPicker />
             </div>
           )}
           {w.address && (

@@ -4,6 +4,7 @@
  *
  *   node scripts/guard.mjs staged        pre-commit: identity + paths + added lines
  *   node scripts/guard.mjs push <range>  pre-push: every commit's author/committer + full diff of the range
+ *   node scripts/guard.mjs remote [name] [url]  pre-push: redsol23 remote + credentials; the public repo only with ZIPNET_RELEASE=1
  *
  * Blocks: private keys, API/bot tokens, seed phrases (except well-known public test mnemonics), local env/key files,
  * machine paths and hostnames, and any string in the local denylist (.git/guard-denylist.txt: one per line, e.g.
@@ -37,6 +38,8 @@ const MAX_BYTES = 2 * 1024 * 1024;
 const SECRET_PATTERNS = [
   [/-----BEGIN [A-Z ]*PRIVATE KEY-----/, "PEM private key"],
   [/\bsk-ant-[A-Za-z0-9_-]{20,}/, "Anthropic API key"],
+  [/\bsk-(?!ant-)[A-Za-z0-9_-]{24,}/, "sk- API key (DeepSeek/OpenAI style)"],
+  [/\bcf[a-z]{1,3}_[A-Za-z0-9_-]{30,}/, "Cloudflare API token"],
   [/\bgh[pousr]_[A-Za-z0-9]{30,}/, "GitHub token"],
   [/\bAKIA[0-9A-Z]{16}\b/, "AWS access key"],
   [/\b\d{8,10}:AA[A-Za-z0-9_-]{30,}\b/, "Telegram bot token"],
@@ -143,8 +146,13 @@ if (mode === "staged") {
 } else if (mode === "remote") {
   // Everything that leaves this repo goes out as redsol23: the remote, the credentials git will use, the identity.
   checkIdentity(git("config", "user.name").trim(), git("config", "user.email").trim(), "git identity");
-  const url = git("remote", "get-url", "--push", "origin").trim();
-  if (!/^https:\/\/github\.com\/redsol23\//.test(url)) flag("origin", `push URL must be https://github.com/redsol23/…, is ${url}`);
+  // pre-push passes the remote's name and URL; by hand, check origin
+  const name = range ?? "origin";
+  const url = (process.argv[4] ?? git("remote", "get-url", "--push", name)).trim();
+  if (!/^https:\/\/github\.com\/redsol23\//.test(url)) flag(name, `push URL must be https://github.com/redsol23/…, is ${url}`);
+  // Day-to-day work goes to the private dev repo; the public repo only receives deliberate releases
+  if (/\/(zipcoin-snowmoon|snowmoon-zipcoin)(\.git)?$/.test(url) &&process.env.ZIPNET_RELEASE !== "1")
+    flag(name, "this is the public repo; push releases with ZIPNET_RELEASE=1, everything else goes to the dev repo");
   const cred = execFileSync("git", ["credential", "fill"], { input: "protocol=https\nhost=github.com\n\n", encoding: "utf8" });
   const user = cred.match(/^username=(.*)$/m)?.[1];
   if (user !== "redsol23") flag("credentials", `git would authenticate as ${user ?? "nobody"}, not redsol23`);

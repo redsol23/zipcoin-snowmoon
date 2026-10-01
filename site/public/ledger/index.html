@@ -1,0 +1,436 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The ledger: zipcoin</title>
+<meta name="description" content="Every zipcoin contract and wallet, what it's for, who can change it, and the money moving through it, read from Ethereum.">
+<link rel="canonical" href="https://zipcoin.org/ledger/">
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#ECF0EC" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#101B1A" media="(prefers-color-scheme: dark)">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/favicon-32.png" type="image/png" sizes="32x32">
+<link rel="manifest" href="/site.webmanifest">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="preload" href="/fonts/newsreader-display.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/fonts/newsreader-text.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="/styles.css">
+<link rel="stylesheet" href="/data.css">
+<script src="/main.js" defer></script>
+<script src="/data.js" defer></script>
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="zipcoin">
+<meta property="og:url" content="https://zipcoin.org/ledger/">
+<meta property="og:title" content="The ledger">
+<meta property="og:description" content="Every zipcoin contract and wallet, what it's for, who can change it, and the money moving through it, read from Ethereum.">
+<meta property="og:image" content="https://zipcoin.org/og/ledger.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="The ledger: Every zipcoin contract and wallet, what it's for, who can change it, and the money moving through it, read from Ethereum.">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="The ledger">
+<meta name="twitter:description" content="Every zipcoin contract and wallet, what it's for, who can change it, and the money moving through it, read from Ethereum.">
+<meta name="twitter:image" content="https://zipcoin.org/og/ledger.png">
+<meta name="twitter:image:alt" content="The ledger: Every zipcoin contract and wallet, what it's for, who can change it, and the money moving through it, read from Ethereum.">
+</head>
+<body class="page-learn page-data" data-page="ledger">
+<a class="skip" href="#main">Skip to content</a>
+<svg class="defs" width="0" height="0" aria-hidden="true" focusable="false"><defs>
+<symbol id="pine" viewBox="-8 -17 16 17" overflow="visible"><path d="M0-16 7 0H-7Z"/><path class="a-snow" d="M0-16 2.5-10h-5Z"/><rect class="a-pine" x="-1.6" y="-1" width="3.2" height="2"/></symbol>
+<symbol id="house" viewBox="-12 -20 24 20" overflow="visible"><rect class="a-stone" x="-10" y="-12" width="20" height="12"/><path class="a-brick" d="M-10-4h20M-10-8h20M-4-8v4M4-8v4M0-12v4M0-4v4"/><path class="a-roof" d="M-12.5-12 0-19l12.5 7Z"/><path class="a-snow" d="M-12.5-12 0-19l12.5 7-2.2-.6L0-17.2-10.3-12.6Z"/><rect class="a-win" x="-6.5" y="-9.5" width="3.4" height="3.4"/><rect class="a-win" x="3.1" y="-9.5" width="3.4" height="3.4"/><rect class="a-pine" x="-1.6" y="-5" width="3.2" height="5"/></symbol>
+</defs></svg>
+
+<header class="top">
+  <div class="top-inner">
+    <a class="brand" href="/" aria-label="zipcoin, home"><svg class="mark" viewBox="0 0 512 512" aria-hidden="true" focusable="false"><circle cx="256" cy="256" r="256" fill="#101b1a"/><circle cx="256" cy="256" r="236" fill="none" stroke="currentColor" stroke-width="40"/><path fill="#f4f0e1" d="M268 190H384L244 322H128Z"/><path d="M323.7 158 290.9 191.6 319.5 219.6 286.7 253.2 258.1 225.2 225.3 258.8 253.9 286.8 221.1 320.4 192.5 292.4 159.7 326" fill="none" stroke="#101b1a" stroke-width="16"/><path fill="#f4f0e1" d="M136 118H376A8 8 0 0 1 384 126V184A8 8 0 0 1 376 192H136A8 8 0 0 1 128 184V126A8 8 0 0 1 136 118ZM136 320H376A8 8 0 0 1 384 328V386A8 8 0 0 1 376 394H136A8 8 0 0 1 128 386V328A8 8 0 0 1 136 320Z"/></svg><span>zipcoin</span></a>
+    <nav class="nav-main" aria-label="Site">
+      <ul>
+        <li><a href="/learn/">How it works</a></li>
+        <li><a href="/learn/privacy/">Privacy</a></li>
+        <li><a href="/learn/couriers/">Couriers</a></li>
+        <li><a href="/learn/veridia/">Veridia</a></li>
+        <li><a href="/learn/faq/">FAQ</a></li>
+      </ul>
+    </nav>
+    <a class="top-source" href="https://github.com/redsol23/zipcoin-snowmoon" rel="noreferrer noopener">Source</a>
+    <details class="menu">
+      <summary class="menu-btn" aria-label="Menu"><span class="menu-icon" aria-hidden="true"></span></summary>
+      <nav class="menu-panel" id="site-menu" aria-label="Menu">
+        <ul>
+          <li><a href="/learn/">How it works</a></li>
+          <li><a href="/learn/privacy/">Privacy</a></li>
+          <li><a href="/learn/tax/">Sales tax</a></li>
+          <li><a href="/learn/couriers/">Couriers</a></li>
+          <li><a href="/learn/veridia/">Veridia</a></li>
+          <li><a href="/learn/agents/">Agents</a></li>
+          <li><a href="/learn/novel/">The novel</a></li>
+          <li><a href="/learn/faq/">FAQ</a></li>
+          <li><a href="https://github.com/redsol23/zipcoin-snowmoon" rel="noreferrer noopener">Source</a></li>
+        </ul>
+      </nav>
+    </details>
+  </div>
+</header>
+
+<main id="main">
+
+<section class="page-head page-head-topic" aria-labelledby="page-title">
+  <div class="wrap">
+    <h1 id="page-title">The ledger</h1>
+    <p class="intro">Every contract and wallet the project runs: what it's for, who can change it, and the money moving through it. Read from Ethereum every minute.</p>
+    <p class="lg-state" data-live-state="waiting" aria-live="polite"><span class="lg-dot" aria-hidden="true"></span><span data-live-text><strong>Goes live at launch.</strong> zipcoin isn't on mainnet yet. Who controls what is below now; the numbers fill in once the contracts are live.</span></p>
+    <ul class="toc">
+      <li><a href="#flows">Money moving</a></li>
+      <li><a href="#contracts">Who controls what</a></li>
+      <li><a href="#read">How to read this</a></li>
+      <li><a href="/privacy-meter/">Privacy meter</a></li>
+      <li><a href="/status/">Status</a></li>
+    </ul>
+  </div>
+</section>
+
+<section id="flows" class="lg-band" aria-labelledby="flows-title">
+  <div class="wrap">
+    <div class="lg-bar">
+      <h2 id="flows-title" class="lg-h2">Money moving</h2>
+      <div class="lg-win" role="group" aria-label="Time window" hidden>
+        <button type="button" data-win="24h" aria-pressed="false">24 hours</button>
+        <button type="button" data-win="7d" aria-pressed="true">7 days</button>
+        <button type="button" data-win="all" aria-pressed="false">All time</button>
+      </div>
+    </div>
+    <ul class="lg-flows">
+      <li class="lg-flow" data-flow="salesTax">
+        <h3>Sales tax</h3>
+        <p class="lg-flow-sum">Every payment settles its tax in the same proof, split three ways. <span data-v="salesTax.count"></span></p>
+        <div class="lg-split" aria-hidden="true"><span class="lg-split-burn" data-w="burned"></span><span class="lg-split-couriers" data-w="couriers"></span><span class="lg-split-treasury" data-w="treasury"></span></div>
+        <dl class="lg-figs">
+          <div class="lg-fig-burn"><dt>Burned</dt><dd data-v="salesTax.burned">—</dd></div>
+          <div class="lg-fig-couriers"><dt>To couriers</dt><dd data-v="salesTax.couriers">—</dd></div>
+          <div class="lg-fig-treasury"><dt>Treasury's share</dt><dd data-v="salesTax.treasury">—</dd></div>
+        </dl>
+      </li>
+      <li class="lg-flow" data-flow="bands">
+        <h3>Treasury liquidity bands</h3>
+        <p class="lg-flow-sum">The treasury's share (ZC) goes into ZC's pool as fixed bands above the launch range only, never below it. Their fees, and any ETH the bands receive, go to the Safe.</p>
+        <dl class="lg-figs">
+          <div><dt>ZC into the bands</dt><dd data-v="bands.deposited.zc">—</dd></div>
+          <div><dt>Fees to the Safe</dt><dd><span data-v="bands.feesToSafe.eth">—</span><span class="lg-and" data-v="bands.feesToSafe.zc"></span></dd></div>
+          <div><dt>ETH forwarded to the Safe</dt><dd data-v="bands.ethToSafe.eth">—</dd></div>
+        </dl>
+      </li>
+      <li class="lg-flow" data-flow="poolHarvests">
+        <h3>Pool rewards</h3>
+        <p class="lg-flow-sum">ZC pays its holders ETH. The pool's share belongs to no depositor, so a harvest sends it to the treasury. <span data-v="poolHarvests.count"></span></p>
+        <dl class="lg-figs">
+          <div><dt>Harvested to the treasury</dt><dd data-v="poolHarvests.forwarded">—</dd></div>
+        </dl>
+      </li>
+      <li class="lg-flow" data-flow="emerald" hidden>
+        <h3>Emerald</h3>
+        <p class="lg-flow-sum">The wallet's assistant, paid per message from a zipped note: part burned, the rest to the treasury, which pays its bills.</p>
+        <dl class="lg-figs">
+          <div><dt>To the treasury</dt><dd data-v="emerald.toTreasury.zc">—</dd></div>
+          <div class="lg-fig-burn"><dt>Burned</dt><dd data-v="emerald.burned.zc">—</dd></div>
+        </dl>
+      </li>
+    </ul>
+    <p class="lg-fine">Totals of on-chain events in the window, not people: nothing here says who paid. Not investment advice.</p>
+  </div>
+</section>
+
+<section id="contracts" class="lg-band lg-band-paper" aria-labelledby="contracts-title">
+  <div class="wrap">
+    <h2 id="contracts-title" class="lg-h2">Who controls what</h2>
+    <p class="intro">Each contract and wallet, what it does, and exactly who can change it. “No owner” means nobody can: not us, not anyone.</p>
+    <h3 class="lg-group">Where the money sits</h3>
+  <ul class="lg-cards">
+    <li class="lg-c" id="c-pool" data-key="pool">
+      <div class="lg-c-head">
+        <h3>The privacy pool</h3>
+        <span class="lg-chip lg-chip-none">No owner</span>
+      </div>
+      <p class="lg-kind">ZipPrivacyPool</p>
+      <p class="lg-role">Holds every zipped ZC and the tree of notes. Coins leave only with a zero-knowledge proof, or by ragequit to the wallet that deposited them.</p>
+      <p class="lg-ctl"><strong>Who controls it.</strong> No owner. The ZC holder rewards it earns (ETH) go to a treasury address fixed at deployment.</p>
+      <ul class="lg-powers"><li>The Entrypoint's owner can wind it down: no new deposits, while withdrawals and ragequits keep working. It can't be undone.</li><li>Anyone may call harvest(), which can only send the pool's ETH rewards to that fixed treasury address.</li></ul>
+      <dl class="lg-live">
+        <div class="lg-addr"><dt>Address</dt><dd data-f="address">At launch</dd></div>
+        <div><dt>ETH</dt><dd data-f="eth">—</dd></div>
+        <div><dt>ZC</dt><dd data-f="zc">—</dd></div>
+        <div><dt>ETH rewards waiting</dt><dd data-f="pending">—</dd></div>
+        <div class="lg-extra" data-f="live" hidden><dt>On-chain now</dt><dd></dd></div>
+      </dl>
+    </li>
+    <li class="lg-c" id="c-entrypoint" data-key="entrypoint">
+      <div class="lg-c-head">
+        <h3>The Entrypoint</h3>
+        <span class="lg-chip lg-chip-safe">2-of-3 Safe</span>
+      </div>
+      <p class="lg-kind">Entrypoint (0xbow privacy-pools-core)</p>
+      <p class="lg-role">The front door: takes deposits, relays withdrawals, and stores the approved-deposit (ASP) roots that private withdrawals must prove against.</p>
+      <p class="lg-ctl"><strong>Who controls it.</strong> A 2-of-3 Safe holds the owner role. The postman's key can only publish ASP roots.</p>
+      <ul class="lg-powers"><li>Owner Safe: upgrade the Entrypoint, register or remove a pool, change a pool's minimum deposit and fee settings, wind a pool down, withdraw Entrypoint fees. An upgrade can change anything the Entrypoint does; ragequit lives in the pool itself, so it can't be taken away by one.</li><li>Postman: publish a new ASP root, which decides which deposits may be withdrawn privately. It can't move coins, and a depositor who isn't approved can always ragequit.</li></ul>
+      <dl class="lg-live">
+        <div class="lg-addr"><dt>Address</dt><dd data-f="address">At launch</dd></div>
+        <div><dt>ETH</dt><dd data-f="eth">—</dd></div>
+        <div><dt>ZC</dt><dd data-f="zc">—</dd></div>
+        <div><dt>ETH rewards waiting</dt><dd data-f="pending">—</dd></div>
+        <div class="lg-extra" data-f="live" hidden><dt>On-chain now</dt><dd></dd></div>
+      </dl>
+    </li>
+    <li class="lg-c" id="c-zc" data-key="zc">
+      <div class="lg-c-head">
+        <h3>ZC</h3>
+        <span class="lg-chip lg-chip-external">Not a zipcoin contract</span>
+      </div>
+      <p class="lg-kind">The existing ZC token (ERC-20)</p>
+      <p class="lg-role">The currency. zipcoin adds no new token.</p>
+      <p class="lg-ctl"><strong>Who controls it.</strong> Not a zipcoin contract. zipcoin has no power over the token.</p>
+      <dl class="lg-live">
+        <div class="lg-addr"><dt>Address</dt><dd data-f="address">At launch</dd></div>
+        <div class="lg-extra" data-f="live" hidden><dt>On-chain now</dt><dd></dd></div>
+      </dl>
+    </li>
+    <li class="lg-c" id="c-pay" data-key="pay">
+      <div class="lg-c-head">
+        <h3>Payments</h3>
+        <span class="lg-chip lg-chip-none">No owner</span>
+      </div>
+      <p class="lg-kind">ZipPay</p>
+      <p class="lg-role">Pays a shop from a zipped note and settles the sales tax in the same proof: part burned, part to the couriers, the rest to the treasury's share.</p>
+      <p class="lg-ctl"><strong>Who controls it.</strong> No owner. The tax rate, the split and where each part goes were fixed at deployment.</p>
+      <dl class="lg-live">
+        <div class="lg-addr"><dt>Address</dt><dd data-f="address">At launch</dd></div>
+        <div><dt>ETH</dt><dd data-f="eth">—</dd></div>
+        <div><dt>ZC</dt><dd data-f="zc">—</dd></div>
+        <div><dt>ETH rewards waiting</dt><dd data-f="pending">—</dd></div>
+        <div class="lg-extra" data-f="live" hidden><dt>On-chain now</dt><dd></dd></div>
+      </dl>
+    </li>
+    <li class="lg-c" id="c-bands" data-key="bands">
+      <div class="lg-c-head">
+        <h3>Treasury liquidity bands</h3>
+        <span class="lg-chip lg-chip-safe">2-of-3 Safe</span>
+      </div>
+      <p class="lg-kind">ZipLiquidityBands</p>
+      <p class="lg-role">Receives the treasury's share of the sales tax and adds it to ZC's pool as fixed one-sided ZC bands above the launch range only (never below it), by fixed rules, when a courier triggers it. Fees, and any ETH it receives, go to the treasury Safe.</p>
+      <p class="lg-ctl"><strong>Who controls it.</strong> The treasury Safe (2-of-3), within limits fixed at deployment.</p>
+      <ul class="lg-powers"><li>Anyone: deposit (within the caps and the minimum interval), collect fees to the Safe, claim the contract's own ETH rewards.</li><li>The Safe only: set the caps (never above the ceilings fixed at deployment), band weights and the share of ETH passed straight to the Safe; pause; forward everything to the Safe; withdraw. Every exit pays the Safe and nothing else.</li></ul>
+      <dl class="lg-live">
+        <div class="lg-addr"><dt>Address</dt><dd data-f="address">At launch</dd></div>
+        <div><dt>ETH</dt><dd data-f="eth">—</dd></div>
+        <div><dt>ZC</dt><dd data-f="zc">—</dd></div>
+        <div><dt>ETH rewards waiting</dt><dd data-f="pending">—</dd></div>
+        <div class="lg-extra" data-f="live" hidden><dt>On-chain now</dt><dd></dd></div>
+      </dl>
+    </li>
+    <li class="lg-c" id="c-safe" data-key="safe">
+      <div class="lg-c-head">
+        <h3>The treasury Safe</h3>
+        <span class="lg-chip lg-chip-safe">2-of-3 Safe</span>
+      </div>
+      <p class="lg-kind">Safe multisig</p>
+      <p class="lg-role">The project treasury. It receives the bands' fees and exits and the pool's harvested ETH rewards, and pays the running costs.</p>
+      <p class="lg-ctl"><strong>Who controls it.</strong> A 2-of-3 Safe: any payment needs two of its three signers.</p>
+      <dl class="lg-live">
+        <div class="lg-addr"><dt>Address</dt><dd data-f="address">At launch</dd></div>
+        <div><dt>ETH</dt><dd data-f="eth">—</dd></div>
+        <div><dt>ZC</dt><dd data-f="zc">—</dd></div>
+        <div><dt>ETH rewards waiting</dt><dd data-f="pending">—</dd></div>
+        <div class="lg-extra" data-f="live" hidden><dt>On-chain now</dt><dd></dd></div>
+      </dl>
+    </li>
+  </ul>
+  <h3 class="lg-group">Everything else</h3>
+  <ul class="lg-cards">
+    <li class="lg-c" id="c-merchants" data-key="merchants">
+      <div class="lg-c-head">
+        <h3>Shops</h3>
+        <span class="lg-chip lg-chip-none">No owner</span>
+      </div>
+      <p class="lg-kind">ZipMerchants</p>
+      <p class="lg-role">Shops stake ZC to be listed and sign every invoice. A shop caught asking to be paid around the tax loses its stake: half to whoever caught it, half burned.</p>
+      <p class="lg-ctl"><strong>Who controls it.</strong> No owner.</p>
+      <dl class="lg-live">
+        <div class="lg-addr"><dt>Address</dt><dd data-f="address">At launch</dd></div>
+        <div><dt>ETH</dt><dd data-f="eth">—</dd></div>
+        <div><dt>ZC</dt><dd data-f="zc">—</dd></div>
+        <div><dt>ETH rewards waiting</dt><dd data-f="pending">—</dd></div>
+        <div class="lg-extra" data-f="live" hidden><dt>On-chain now</dt><dd></dd></div>
+      </dl>
+    </li>
+    <li class="lg-c" id="c-couriers" data-key="couriers">
+      <div class="lg-c-head">
+        <h3>Couriers</h3>
+        <span class="lg-chip lg-chip-none">No owner</span>
+      </div>
+      <p class="lg-kind">ZipCouriers</p>
+      <p class="lg-role">Couriers bond ZC and publish an address. They carry proofs, hold them for a random while, and are paid the couriers' share of the tax. A courier that breaks a signed promise can be slashed by anyone holding the receipt.</p>
+      <p class="lg-ctl"><strong>Who controls it.</strong> No owner.</p>
+      <dl class="lg-live">
+        <div class="lg-addr"><dt>Address</dt><dd data-f="address">At launch</dd></div>
+        <div><dt>ETH</dt><dd data-f="eth">—</dd></div>
+        <div><dt>ZC</dt><dd data-f="zc">—</dd></div>
+        <div><dt>ETH rewards waiting</dt><dd data-f="pending">—</dd></div>
+        <div class="lg-extra" data-f="live" hidden><dt>On-chain now</dt><dd></dd></div>
+      </dl>
+    </li>
+    <li class="lg-c" id="c-badges" data-key="badges">
+      <div class="lg-c-head">
+        <h3>Badges</h3>
+        <span class="lg-chip lg-chip-none">No owner</span>
+      </div>
+      <p class="lg-kind">ZipBadges</p>
+      <p class="lg-role">Lock ZC for a while to earn a tier you can prove without saying who you are. The stake goes back into the pool as a new note when the lock ends.</p>
+      <p class="lg-ctl"><strong>Who controls it.</strong> No owner.</p>
+      <dl class="lg-live">
+        <div class="lg-addr"><dt>Address</dt><dd data-f="address">At launch</dd></div>
+        <div><dt>ETH</dt><dd data-f="eth">—</dd></div>
+        <div><dt>ZC</dt><dd data-f="zc">—</dd></div>
+        <div><dt>ETH rewards waiting</dt><dd data-f="pending">—</dd></div>
+        <div class="lg-extra" data-f="live" hidden><dt>On-chain now</dt><dd></dd></div>
+      </dl>
+    </li>
+    <li class="lg-c" id="c-signal" data-key="signal">
+      <div class="lg-c-head">
+        <h3>Anonymous posts</h3>
+        <span class="lg-chip lg-chip-none">No owner</span>
+      </div>
+      <p class="lg-kind">ZipSignal</p>
+      <p class="lg-role">Posts from inside a group (&quot;someone with a tier-3 badge says...&quot;), a few per member per day, with no way to link two of them.</p>
+      <p class="lg-ctl"><strong>Who controls it.</strong> No owner, and it holds no funds.</p>
+      <dl class="lg-live">
+        <div class="lg-addr"><dt>Address</dt><dd data-f="address">At launch</dd></div>
+        <div><dt>ETH</dt><dd data-f="eth">—</dd></div>
+        <div><dt>ZC</dt><dd data-f="zc">—</dd></div>
+        <div><dt>ETH rewards waiting</dt><dd data-f="pending">—</dd></div>
+        <div class="lg-extra" data-f="live" hidden><dt>On-chain now</dt><dd></dd></div>
+      </dl>
+    </li>
+    <li class="lg-c" id="c-polls" data-key="polls">
+      <div class="lg-c-head">
+        <h3>Polls</h3>
+        <span class="lg-chip lg-chip-none">No owner</span>
+      </div>
+      <p class="lg-kind">ZipPolls</p>
+      <p class="lg-role">Burn ZC to ask a group a question and pay members to answer. Answers are public and countable; who answered isn't.</p>
+      <p class="lg-ctl"><strong>Who controls it.</strong> No owner.</p>
+      <dl class="lg-live">
+        <div class="lg-addr"><dt>Address</dt><dd data-f="address">At launch</dd></div>
+        <div><dt>ETH</dt><dd data-f="eth">—</dd></div>
+        <div><dt>ZC</dt><dd data-f="zc">—</dd></div>
+        <div><dt>ETH rewards waiting</dt><dd data-f="pending">—</dd></div>
+        <div class="lg-extra" data-f="live" hidden><dt>On-chain now</dt><dd></dd></div>
+      </dl>
+    </li>
+    <li class="lg-c" id="c-broadcaster" data-key="broadcaster">
+      <div class="lg-c-head">
+        <h3>Broadcasts</h3>
+        <span class="lg-chip lg-chip-none">No owner</span>
+      </div>
+      <p class="lg-kind">ZipBroadcaster</p>
+      <p class="lg-role">Burn ZC to be heard. The burn is the signal readers rank messages by.</p>
+      <p class="lg-ctl"><strong>Who controls it.</strong> No owner.</p>
+      <dl class="lg-live">
+        <div class="lg-addr"><dt>Address</dt><dd data-f="address">At launch</dd></div>
+        <div><dt>ETH</dt><dd data-f="eth">—</dd></div>
+        <div><dt>ZC</dt><dd data-f="zc">—</dd></div>
+        <div><dt>ETH rewards waiting</dt><dd data-f="pending">—</dd></div>
+        <div class="lg-extra" data-f="live" hidden><dt>On-chain now</dt><dd></dd></div>
+      </dl>
+    </li>
+    <li class="lg-c" id="c-doorstep" data-key="doorstep">
+      <div class="lg-c-head">
+        <h3>Doorstep</h3>
+        <span class="lg-chip lg-chip-none">No owner</span>
+      </div>
+      <p class="lg-kind">ZipDoorstep</p>
+      <p class="lg-role">Burn ZC at someone's door, with an optional gift that can never dwarf the burn.</p>
+      <p class="lg-ctl"><strong>Who controls it.</strong> No owner.</p>
+      <dl class="lg-live">
+        <div class="lg-addr"><dt>Address</dt><dd data-f="address">At launch</dd></div>
+        <div><dt>ETH</dt><dd data-f="eth">—</dd></div>
+        <div><dt>ZC</dt><dd data-f="zc">—</dd></div>
+        <div><dt>ETH rewards waiting</dt><dd data-f="pending">—</dd></div>
+        <div class="lg-extra" data-f="live" hidden><dt>On-chain now</dt><dd></dd></div>
+      </dl>
+    </li>
+    <li class="lg-c" id="c-rezip" data-key="rezip">
+      <div class="lg-c-head">
+        <h3>Private sends</h3>
+        <span class="lg-chip lg-chip-none">No owner</span>
+      </div>
+      <p class="lg-kind">ZipRezip</p>
+      <p class="lg-role">Spends a note and deposits the value again for the recipient, so the coins never leave the pool.</p>
+      <p class="lg-ctl"><strong>Who controls it.</strong> No owner.</p>
+      <dl class="lg-live">
+        <div class="lg-addr"><dt>Address</dt><dd data-f="address">At launch</dd></div>
+        <div><dt>ETH</dt><dd data-f="eth">—</dd></div>
+        <div><dt>ZC</dt><dd data-f="zc">—</dd></div>
+        <div><dt>ETH rewards waiting</dt><dd data-f="pending">—</dd></div>
+        <div class="lg-extra" data-f="live" hidden><dt>On-chain now</dt><dd></dd></div>
+      </dl>
+    </li>
+    <li class="lg-c" id="c-addressRegistry" data-key="addressRegistry">
+      <div class="lg-c-head">
+        <h3>Zip addresses</h3>
+        <span class="lg-chip lg-chip-none">No owner</span>
+      </div>
+      <p class="lg-kind">ZipAddressRegistry</p>
+      <p class="lg-role">Maps a wallet to a public encryption key, so anyone can send to it privately.</p>
+      <p class="lg-ctl"><strong>Who controls it.</strong> No owner. Each wallet manages its own entry.</p>
+      <dl class="lg-live">
+        <div class="lg-addr"><dt>Address</dt><dd data-f="address">At launch</dd></div>
+        <div><dt>ETH</dt><dd data-f="eth">—</dd></div>
+        <div><dt>ZC</dt><dd data-f="zc">—</dd></div>
+        <div><dt>ETH rewards waiting</dt><dd data-f="pending">—</dd></div>
+        <div class="lg-extra" data-f="live" hidden><dt>On-chain now</dt><dd></dd></div>
+      </dl>
+    </li>
+  </ul>
+  </div>
+</section>
+
+<section id="read" class="lg-band" aria-labelledby="read-title">
+  <div class="wrap">
+    <h2 id="read-title" class="lg-h2">How to read this</h2>
+    <ul class="points lg-points">
+      <li><h3>Every number comes from Ethereum</h3><p>The ledger reads the contracts' events and balances once a minute. Each address links to Etherscan, so you can check any of it yourself.</p></li>
+      <li><h3>Totals, never people</h3><p>The sales tax is summed from each payment's split, and the pool's rewards from each harvest. Nothing here says who paid or who deposited.</p></li>
+      <li><h3>ETH rewards waiting</h3><p>ZC pays its holders in ETH. The privacy pool's share belongs to no single depositor, so anyone can harvest it to the project treasury.</p></li>
+      <li><h3>Only what's live</h3><p>The list shows the contracts that are public and running. Features still being built join it on the day they launch.</p></li>
+      <li><h3>A Safe needs two of three</h3><p>Where a Safe has powers, any action needs two of its three signers, and the powers are listed in full. The signers' count is read from the chain; their addresses aren't shown.</p></li>
+      <li><h3>First-party only</h3><p>This page reads one address, api.zipcoin.org, run by the project. No third parties, no cookies, and it logs nothing about who looked.</p></li>
+    </ul>
+    <p class="lg-fine">Numbers can lag the chain by a minute or two. Nothing here is investment advice.</p>
+  </div>
+</section>
+
+<nav class="pager wrap" aria-label="More">
+  <a class="pager-prev" href="/learn/tax/">← Sales tax</a>
+  <a class="pager-hub" href="/status/">Status</a>
+  <a class="pager-next" href="/privacy-meter/">Privacy meter →</a>
+</nav>
+
+</main>
+
+<footer class="foot">
+  <div class="wrap grid">
+    <p class="foot-cta"></p>
+    <div class="foot-main">
+      <p class="foot-brand"><svg class="mark" viewBox="0 0 512 512" aria-hidden="true" focusable="false"><circle cx="256" cy="256" r="256" fill="#101b1a"/><circle cx="256" cy="256" r="236" fill="none" stroke="currentColor" stroke-width="40"/><path fill="#f4f0e1" d="M268 190H384L244 322H128Z"/><path d="M323.7 158 290.9 191.6 319.5 219.6 286.7 253.2 258.1 225.2 225.3 258.8 253.9 286.8 221.1 320.4 192.5 292.4 159.7 326" fill="none" stroke="#101b1a" stroke-width="16"/><path fill="#f4f0e1" d="M136 118H376A8 8 0 0 1 384 126V184A8 8 0 0 1 376 192H136A8 8 0 0 1 128 184V126A8 8 0 0 1 136 118ZM136 320H376A8 8 0 0 1 384 328V386A8 8 0 0 1 376 394H136A8 8 0 0 1 128 386V328A8 8 0 0 1 136 320Z"/></svg><span>zipcoin</span></p>
+      <p>A fan project, not affiliated with the author. Not on mainnet. Nothing here is investment advice.</p>
+      <p>Built on <a href="https://github.com/0xbow-io/privacy-pools-core" rel="noreferrer noopener">0xbow privacy-pools-core</a> and <a href="https://github.com/semaphore-protocol/semaphore" rel="noreferrer noopener">Semaphore</a>. The world is Vitalik Buterin's <cite>Snowmoon</cite>.</p>
+    </div>
+    <ul class="foot-links">
+      <li><a href="https://github.com/redsol23/zipcoin-snowmoon" rel="noreferrer noopener">Source on GitHub</a></li>
+      <li><a href="https://vitalik.eth.limo/general/2026/09/27/the_cryptographic_world_computer.html" rel="noreferrer noopener"><cite>The cryptographic world computer</cite></a></li>
+      <li><a href="/ledger/" aria-current="page">Ledger</a> · <a href="/status/">Status</a></li>
+      <li><a href="#main">Back to top</a></li>
+    </ul>
+  </div>
+</footer>
+</body>
+</html>

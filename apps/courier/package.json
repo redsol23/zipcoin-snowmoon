@@ -1,10 +1,12 @@
 {
   "name": "@zipnet/courier",
   "private": true,
+  "version": "0.1.0",
   "type": "module",
   "scripts": {
     "start": "tsx src/main.ts",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test": "tsx --test src/sender.test.ts src/fees.test.ts src/payouts.test.ts src/schedule.test.ts src/budget.test.ts src/jobstore.test.ts src/roots.test.ts"
   },
   "dependencies": {
     "@zipnet/sdk": "workspace:*",

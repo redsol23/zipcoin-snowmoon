@@ -51,10 +51,12 @@ export function payingFetch(payer: Payer, opts: PayingFetchOptions) {
     }
 
     const calls = BigInt(opts.calls ?? r.extra.suggestedCalls);
-    const base = BigInt(r.extra.pricePerCall) * calls;
+    // One purchase may be split across merchants (e.g. a burned share); every part carries the same orderId
+    const parts = [{ merchantId: r.extra.merchantId, pricePerCall: r.extra.pricePerCall }, ...(r.extra.split ?? [])];
+    const base = parts.reduce((a, p) => a + BigInt(p.pricePerCall) * calls, 0n);
     if (base > opts.maxBase) throw new Error(`Refusing to pay ${base} (over the limit of ${opts.maxBase})`);
     const secret = toHex(crypto.getRandomValues(new Uint8Array(32)));
-    await payer.pay(BigInt(r.extra.merchantId), base, orderIdOf(secret));
+    for (const p of parts) await payer.pay(BigInt(p.merchantId), BigInt(p.pricePerCall) * calls, orderIdOf(secret));
     credits.set(r.extra.merchantId, secret);
 
     const deadline = Date.now() + (opts.settleTimeoutMs ?? 120_000);

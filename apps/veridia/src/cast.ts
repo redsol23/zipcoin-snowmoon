@@ -4,11 +4,21 @@
  * the rest to the characters' daily lives.
  *
  * Every character has a wallet, a zip key, a zip address and a Semaphore identity, and lives on zipcoin: they eat,
- * send allowances, burn at doorsteps, post anonymously, run and answer polls. Their lives are real pool traffic, so
- * they are also the cover that lets real users' privacy work.
+ * send allowances, burn at doorsteps, post anonymously, and run and answer polls. Their lives are real pool traffic, so they are also the cover that lets real users' privacy work.
  */
 
-export type Action = "eat" | "allowance" | "knock" | "speak" | "post" | "poll" | "vote" | "zip" | "rest";
+export type Action =
+  | "eat"
+  | "allowance"
+  | "knock"
+  | "speak"
+  | "message"
+  | "post"
+  | "poll"
+  | "ask"
+  | "vote"
+  | "zip"
+  | "rest";
 
 export type Character = {
   id: string;
@@ -33,7 +43,7 @@ export const CAST: Character[] = [
     city: "Meldan",
     bio: "Teaching assistant in Meldan who reviews rubrics in his spare time. Thoughtful, a little absent-minded (he once forgot to send himself funds before dinner). Walks through the Kalimar forest paths every evening.",
     voice: "careful, curious, dry humor",
-    habits: { eat: 5, post: 3, vote: 3, allowance: 2, zip: 1, rest: 3 },
+    habits: { eat: 5, post: 3, vote: 3, allowance: 2, ask: 1, zip: 1, rest: 3 },
     close: ["seila", "febric", "hreda"],
     purse: 4000,
   },
@@ -43,7 +53,7 @@ export const CAST: Character[] = [
     city: "Meldan",
     bio: "Gladias's partner. Persuasive, patient, the one people open the door for. Sends the kids money for their expenses and keeps the family's recovery keys tested.",
     voice: "warm, direct, determined",
-    habits: { allowance: 5, eat: 3, knock: 2, vote: 3, speak: 1, rest: 2 },
+    habits: { allowance: 5, eat: 3, knock: 2, vote: 3, speak: 1, message: 1, rest: 2 },
     close: ["febric", "hreda", "gladias", "mov"],
     purse: 6000,
   },
@@ -53,7 +63,7 @@ export const CAST: Character[] = [
     city: "Greater Plum Harbor",
     bio: "A teenager living away from home for now, taking informal math lessons with other kids. Playful; teases Gladias about forgetting his zipcoins.",
     voice: "playful, quick, a bit cheeky",
-    habits: { eat: 4, post: 3, speak: 1, rest: 4 },
+    habits: { eat: 4, post: 3, speak: 1, vote: 1, rest: 4 },
     close: ["hreda", "seila"],
     purse: 400,
   },
@@ -73,7 +83,7 @@ export const CAST: Character[] = [
     city: "Dzego",
     bio: "From Dzego, nine months deep into studying cryptography. Loves food-truck dish Number Ten. Gets anonymous messages from courtyards he once ate at.",
     voice: "excitable, technical, generous with explanations",
-    habits: { eat: 4, post: 4, speak: 2, vote: 2, rest: 2 },
+    habits: { eat: 4, post: 4, speak: 1, vote: 2, ask: 1, rest: 2 },
     close: ["gladias", "mov"],
     purse: 2500,
   },
@@ -83,7 +93,7 @@ export const CAST: Character[] = [
     city: "Meldan",
     bio: "Seila's companion on hard errands. Impatient: tends to burn zipcoins at a doorstep before anyone has knocked twice. Good at finding people.",
     voice: "terse, impatient, loyal",
-    habits: { knock: 5, speak: 2, eat: 2, rest: 2 },
+    habits: { knock: 4, message: 2, speak: 1, eat: 2, vote: 1, rest: 2 },
     close: ["seila", "zei"],
     purse: 3000,
   },
@@ -93,7 +103,7 @@ export const CAST: Character[] = [
     city: "Freetown",
     bio: "Founder of Silverchat. Believes in publishing proofs of every algorithm change and runs large paid polls to create common knowledge.",
     voice: "measured, strategic, founder-ish",
-    habits: { poll: 4, speak: 2, eat: 2, rest: 3 },
+    habits: { poll: 3, speak: 2, eat: 2, vote: 1, rest: 3 },
     close: ["seila"],
     purse: 20000,
   },

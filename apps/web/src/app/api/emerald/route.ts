@@ -1,7 +1,12 @@
 // Emerald's brain. Stateless: the browser keeps the conversation and runs every tool itself, so notes, keys and
 // balances stay on the device except for what a tool result chooses to say. The system prompt and tool list live
-// here, so a page can't hand Emerald new powers. Emerald never moves money; it proposes, the person confirms.
-import Anthropic from "@anthropic-ai/sdk";
+// on the server, so a page can't hand Emerald new powers. Emerald never moves money; it proposes, the person confirms.
+// The model is DeepSeek (OpenAI-compatible chat completions); access is gated to ZC holders (lib/emerald/gate).
+import { costUsd, emeraldCap, estimatePromptTokens, pricesFor, restingMessage, sessionLimited, tokensOf } from "@/lib/emerald/budget";
+import { accessOptions, authorize, sessionKey } from "@/lib/emerald/gate";
+import { chat, ChatError, MAX_TOKENS, modelName, type ChatMessage } from "@/lib/emerald/deepseek";
+import { gateDeps, GateUnavailable } from "@/lib/emerald/server";
+import { ALL_TOOLS, FEATURE_PROMPT } from "@/lib/emerald/tools";
 
 export const dynamic = "force-dynamic";
 
@@ -17,67 +22,13 @@ How zipcoin works here:
 
 Your job:
 - Answer briefly and plainly, in a warm, careful voice. Short paragraphs, no headings.
-- Before proposing any payment or send, check the recipient with check_recipient and say what you found (a known merchant, a registered zip address, a Veridia resident, a contract, or unknown). Flag anything odd.
+- Before proposing any payment or send, check the recipient with check_recipient and say what you found (a known merchant, a registered zip address, a contract, or unknown). Flag anything odd.
 - Use get_wallet before talking about balances. Use pool_activity when advising on timing. Use read_inbox for "what's new", knocks, posts and polls.
 - When the person wants to do something, call propose_action with exact parameters and a one-sentence reason. You cannot execute anything: the person sees a card and confirms or dismisses it. Never say an action happened unless they confirmed it.
 - Never ask for, accept, or repeat recovery phrases, private keys or signatures. If someone offers one, tell them to keep it private.
-- Don't give investment advice or price predictions.`;
+- Don't give investment advice or price predictions.
 
-const nullable = (type: "string") => ({ type: [type, "null"] as ["string", "null"] });
-
-const TOOLS: Anthropic.Beta.BetaTool[] = [
-  {
-    name: "get_wallet",
-    description: "The person's balances: zipped (private) total, largest spendable note, amount waiting to be cleared, public wallet ZC, badge tier, whether their zip address is set up, and their public address.",
-    strict: true,
-    input_schema: { type: "object", properties: {}, required: [], additionalProperties: false },
-  },
-  {
-    name: "check_recipient",
-    description: "Look up an address before sending or paying: whether it is this person, a registered zip address, a listed merchant (and which), a Veridia resident, a contract, and its ENS-free label if known.",
-    strict: true,
-    input_schema: { type: "object", properties: { address: { type: "string" } }, required: ["address"], additionalProperties: false },
-  },
-  {
-    name: "list_merchants",
-    description: "Merchants that accept zipcoin with sales tax, with their ids, and the tax rate.",
-    strict: true,
-    input_schema: { type: "object", properties: {}, required: [], additionalProperties: false },
-  },
-  {
-    name: "read_inbox",
-    description: "Burns at this person's door (largest first), recent anonymous board posts, and open polls they can answer.",
-    strict: true,
-    input_schema: { type: "object", properties: {}, required: [], additionalProperties: false },
-  },
-  {
-    name: "pool_activity",
-    description: "How busy the privacy pool is: recent deposits and spends per hour, crowd size, and a suggested courier hold.",
-    strict: true,
-    input_schema: { type: "object", properties: {}, required: [], additionalProperties: false },
-  },
-  {
-    name: "propose_action",
-    description:
-      "Show the person a card for one action they can confirm or dismiss. Amounts are in ZC as decimal strings. zip: amount. send: amount + to (address). send_link: amount. pay: merchant_id + amount (the base price; tax is added). unzip: amount + to. speak: amount (burn) + message (+ target, a description of who it's for). knock: to + amount (burn) + message.",
-    strict: true,
-    input_schema: {
-      type: "object",
-      properties: {
-        action: { type: "string", enum: ["zip", "send", "send_link", "pay", "unzip", "speak", "knock"] },
-        amount_zc: { type: "string" },
-        to: nullable("string"),
-        merchant_id: nullable("string"),
-        message: nullable("string"),
-        target: nullable("string"),
-        hold: { type: "string", enum: ["now", "hour", "epoch"] },
-        reason: { type: "string" },
-      },
-      required: ["action", "amount_zc", "to", "merchant_id", "message", "target", "hold", "reason"],
-      additionalProperties: false,
-    },
-  },
-];
+${FEATURE_PROMPT}`;
 
 const hits = new Map<string, number[]>();
 function limited(ip: string) {
@@ -88,38 +39,96 @@ function limited(ip: string) {
   return recent.length > 30;
 }
 
-let client: Anthropic | null = null;
+/** The browser's history, checked for shape: only user, assistant and tool turns, as the OpenAI format has them. */
+function parseMessages(raw: string): ChatMessage[] | null {
+  let j: { messages?: unknown };
+  try {
+    j = JSON.parse(raw);
+  } catch {
+    return null;
+  }
+  const ms = j.messages;
+  if (!Array.isArray(ms) || ms.length === 0 || ms.length > 200) return null;
+  const ok = ms.every((m) => {
+    if (!m || typeof m !== "object") return false;
+    const r = (m as { role?: unknown }).role;
+    if (r === "user") return typeof m.content === "string";
+    if (r === "tool") return typeof m.tool_call_id === "string" && typeof m.content === "string";
+    if (r === "assistant") return (typeof m.content === "string" || m.content === null) && (m.tool_calls === undefined || Array.isArray(m.tool_calls));
+    return false;
+  });
+  return ok && (ms[0] as ChatMessage).role === "user" ? (ms as ChatMessage[]) : null;
+}
+
+/** What the gate accepts, for the wallet's sign-in panel; `resting` (unix sec) when today's model budget is spent. */
+export async function GET(req: Request) {
+  try {
+    const d = await gateDeps();
+    const w = worstCase(0);
+    const r = emeraldCap().reserve(w.usd, w.tokens);
+    if (r.ok) emeraldCap().release(r.r);
+    return Response.json({ ...accessOptions(d, "How to use Emerald."), resting: r.ok ? null : r.until });
+  } catch (e) {
+    if (e instanceof GateUnavailable) return Response.json({ error: e.message }, { status: 503 });
+    throw e;
+  }
+}
+
+const TOOLS_CHARS = JSON.stringify(ALL_TOOLS).length;
+
+/** The most a call with this much conversation can cost: its prompt, estimated generously, all uncached, plus a full answer */
+function worstCase(conversationChars: number) {
+  const prompt = estimatePromptTokens(SYSTEM.length + TOOLS_CHARS + conversationChars);
+  return { usd: costUsd({ prompt_cache_miss_tokens: prompt, completion_tokens: MAX_TOKENS }, pricesFor(modelName(), process.env)), tokens: prompt + MAX_TOKENS };
+}
+
+/** Emerald's answer while the day's budget is spent. */
+function resting(until: number) {
+  return Response.json({ message: { role: "assistant", content: restingMessage(until) }, finish_reason: "stop", resting: until });
+}
 
 export async function POST(req: Request) {
   if (limited(req.headers.get("x-forwarded-for") ?? "local")) return Response.json({ error: "Slow down a little; try again in a minute." }, { status: 429 });
   const raw = await req.text();
   if (raw.length > 300_000) return Response.json({ error: "This conversation is too long. Start a new one." }, { status: 413 });
-  const { messages } = JSON.parse(raw) as { messages: Anthropic.Beta.BetaMessageParam[] };
-  if (!Array.isArray(messages) || messages.length === 0 || messages.length > 80 || messages.some((m) => m.role !== "user" && m.role !== "assistant")) {
-    return Response.json({ error: "That conversation doesn't look right. Start a new one." }, { status: 400 });
-  }
+  const messages = parseMessages(raw);
+  if (!messages) return Response.json({ error: "That conversation doesn't look right. Start a new one." }, { status: 400 });
+  // Checked before the gate: without a model there is nothing to sign in to
+  if (!process.env.DEEPSEEK_API_KEY) return Response.json({ error: "Emerald isn't set up on this server yet (it needs a DeepSeek API key)." }, { status: 503 });
+
+  let d;
   try {
-    client ??= new Anthropic();
-    const res = await client.beta.messages.create({
-      model: "claude-opus-5-5",
-      max_tokens: 8000,
-      betas: ["server-side-fallback-2026-07-01"],
-      fallbacks: "default",
-      output_config: { effort: "medium" },
-      system: SYSTEM,
-      tools: TOOLS,
-      messages,
-    });
-    return Response.json({ content: res.content, stop_reason: res.stop_reason });
+    d = await gateDeps();
   } catch (e) {
-    if (e instanceof Anthropic.AuthenticationError) return Response.json({ error: "Emerald isn't set up on this server yet (it needs Anthropic credentials)." }, { status: 503 });
-    if (e instanceof Anthropic.RateLimitError) return Response.json({ error: "Emerald is busy right now. Try again in a moment." }, { status: 429 });
-    if (e instanceof Anthropic.BadRequestError) return Response.json({ error: "Emerald couldn't read that conversation. Start a new one." }, { status: 400 });
-    if (e instanceof Anthropic.APIError) return Response.json({ error: `Emerald couldn't answer (${e.status}). Try again.` }, { status: 502 });
-    // No credentials configured at all: the SDK refuses before any request, with a plain Error (no typed class exists)
-    if (e instanceof Anthropic.AnthropicError || (e instanceof Error && /authentication method/i.test(e.message))) {
-      return Response.json({ error: "Emerald isn't set up on this server yet (it needs Anthropic credentials)." }, { status: 503 });
-    }
+    if (e instanceof GateUnavailable) return Response.json({ error: e.message }, { status: 503 });
+    throw e;
+  }
+
+  // Per-session limits and the daily budget are checked before the gate
+  const session = sessionKey(d, req.headers.get("authorization"), d.now());
+  if (session && sessionLimited(session)) return Response.json({ error: "You're sending messages faster than Emerald can take them. Wait a minute and try again." }, { status: 429 });
+  const w = worstCase(raw.length);
+  const reserved = emeraldCap().reserve(w.usd, w.tokens);
+  if (!reserved.ok) return resting(reserved.until);
+
+  const auth = authorize(d, { authorization: req.headers.get("authorization") });
+  if (!auth.ok) {
+    emeraldCap().release(reserved.r);
+    return Response.json(auth.body, { status: auth.status });
+  }
+
+  try {
+    const res = await chat({ system: SYSTEM, messages, tools: ALL_TOOLS });
+    // The real cost from DeepSeek's usage fields; without them, the reserved worst case counts
+    const prices = pricesFor(modelName(), process.env);
+    emeraldCap().settle(reserved.r, res.usage ? costUsd(res.usage, prices) : w.usd, res.usage ? tokensOf(res.usage) : w.tokens);
+    // Only the fields the next request needs; reasoning_content must go back to DeepSeek with the tool history
+    const m = res.message;
+    const message = { role: "assistant" as const, content: m.content ?? null, ...(m.reasoning_content ? { reasoning_content: m.reasoning_content } : {}), ...(m.tool_calls?.length ? { tool_calls: m.tool_calls } : {}) };
+    return Response.json({ message, finish_reason: res.finish_reason });
+  } catch (e) {
+    emeraldCap().release(reserved.r);
+    if (e instanceof ChatError) return Response.json({ error: e.message }, { status: e.status });
     throw e;
   }
 }

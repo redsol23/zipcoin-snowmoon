@@ -1,0 +1,36 @@
+# Extra couriers on the same box. Copy to couriers.override.yml, keep one block per courier, and enable it in .env:
+#   COMPOSE_FILE=docker-compose.yml:couriers.override.yml
+#
+# Each courier needs its own:
+#   - key (bonded ZC + ETH):      $ZIPNET_ROOT/secrets/courierN_key            (600)
+#   - cover wallet phrase:        $ZIPNET_ROOT/secrets/courierN_cover_mnemonic (600, may be empty = no cover traffic)
+#   - env file:                   $ZIPNET_ROOT/env/courierN.env                (copy env/courier.env.example)
+#   - data dir:                   $ZIPNET_ROOT/data/courierN                   (owned by the zipnet user)
+#   - hostname + tunnel route:    courierN.<domain> -> http://courierN:8720    (deploy/cloudflared/config.yml.example)
+#
+# deploy/bootstrap.sh --couriers N creates the dirs and empty secret files for courier1..N.
+
+services:
+  courier2:
+    extends:
+      file: docker-compose.yml
+      service: courier1
+    env_file: !override
+      - ${ZIPNET_ROOT:-/srv/zipnet}/env/common.env
+      - ${ZIPNET_ROOT:-/srv/zipnet}/env/courier2.env
+    environment:
+      PUBLIC_URL: https://courier2.${ZIPNET_DOMAIN:-zipcoin.org}
+      COURIER_KEY__FILE: /run/secrets/courier2_key
+      COVER_MNEMONIC__FILE: /run/secrets/courier2_cover_mnemonic
+    secrets: !override [courier2_key, courier2_cover_mnemonic]
+    volumes: !override
+      - ${ZIPNET_ROOT:-/srv/zipnet}/data/courier2:/var/lib/zipnet
+      - ${ZIPNET_ROOT:-/srv/zipnet}/deployments:/deployments:ro
+
+  # courier3: same block with 3 in place of 2
+
+secrets:
+  courier2_key:
+    file: ${ZIPNET_ROOT:-/srv/zipnet}/secrets/courier2_key
+  courier2_cover_mnemonic:
+    file: ${ZIPNET_ROOT:-/srv/zipnet}/secrets/courier2_cover_mnemonic

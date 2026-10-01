@@ -21,17 +21,11 @@ export default async function ResidentPage({ params }: { params: Promise<{ id: s
         <p className="mt-1 text-lichen">{r.shop ? `A shop in ${r.city}` : `Lives in ${r.city}`}</p>
         <p className="mt-4 max-w-md font-story text-lg leading-relaxed">{r.bio}</p>
         <VeridiaWorld residents={cast} focus={r.id} label={`${r.name}'s corner of Veridia`} className="mt-6 h-72 max-w-md" />
-        <dl className="mt-8 space-y-3 text-sm">
-          <div>
-            <dt className="text-lichen">Public wallet</dt>
-            <dd className="break-all">{r.wallet}</dd>
-          </div>
-          <div>
-            <dt className="text-lichen">Zip address (for private sends)</dt>
-            <dd className="break-all">{r.zipAddress}</dd>
-          </div>
-        </dl>
-        <p className="mt-8 text-sm text-lichen">
+        <p className="mt-8 max-w-md text-sm leading-relaxed text-lichen">
+          {r.name}&apos;s wallet isn&apos;t listed here, on purpose. Residents pay, send and post from the same pool as everyone else, and
+          their story is told a little late and without the details, so their everyday spending is part of the crowd that real users hide in.
+        </p>
+        <p className="mt-4 text-sm text-lichen">
           <Link href="/residents" className="underline underline-offset-2 hover:text-pine">
             All residents
           </Link>

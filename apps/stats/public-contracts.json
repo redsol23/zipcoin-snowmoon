@@ -1,0 +1,166 @@
+{
+  "about": "What the public ledger and status pages may show. Only entries with \"show\": true are served by the stats API or drawn on zipcoin.org; everything else stays off, including its address. Keys are deployment keys (contracts/deployments/<name>.json), plus \"safe\" (the treasury Safe, read on-chain). To publish a feature at its launch, set \"show\": true and fill in name, contract, role, controller and powers. See docs/DEPLOY.md, step 8b.",
+  "contracts": [
+    {
+      "key": "pool",
+      "show": true,
+      "name": "The privacy pool",
+      "contract": "ZipPrivacyPool",
+      "control": "none",
+      "role": "Holds every zipped ZC and the tree of notes. Coins leave only with a zero-knowledge proof, or by ragequit to the wallet that deposited them.",
+      "controller": "No owner. The ZC holder rewards it earns (ETH) go to a treasury address fixed at deployment.",
+      "powers": [
+        "The Entrypoint's owner can wind it down: no new deposits, while withdrawals and ragequits keep working. It can't be undone.",
+        "Anyone may call harvest(), which can only send the pool's ETH rewards to that fixed treasury address."
+      ]
+    },
+    {
+      "key": "entrypoint",
+      "show": true,
+      "name": "The Entrypoint",
+      "contract": "Entrypoint (0xbow privacy-pools-core)",
+      "control": "safe",
+      "role": "The front door: takes deposits, relays withdrawals, and stores the approved-deposit (ASP) roots that private withdrawals must prove against.",
+      "controller": "A 2-of-3 Safe holds the owner role. The postman's key can only publish ASP roots.",
+      "powers": [
+        "Owner Safe: upgrade the Entrypoint, register or remove a pool, change a pool's minimum deposit and fee settings, wind a pool down, withdraw Entrypoint fees. An upgrade can change anything the Entrypoint does; ragequit lives in the pool itself, so it can't be taken away by one.",
+        "Postman: publish a new ASP root, which decides which deposits may be withdrawn privately. It can't move coins, and a depositor who isn't approved can always ragequit."
+      ]
+    },
+    {
+      "key": "zc",
+      "show": true,
+      "name": "ZC",
+      "contract": "The existing ZC token (ERC-20)",
+      "control": "external",
+      "role": "The currency. zipcoin adds no new token.",
+      "controller": "Not a zipcoin contract. zipcoin has no power over the token.",
+      "powers": []
+    },
+    {
+      "key": "pay",
+      "show": true,
+      "name": "Payments",
+      "contract": "ZipPay",
+      "control": "none",
+      "role": "Pays a shop from a zipped note and settles the sales tax in the same proof: part burned, part to the couriers, the rest to the treasury's share.",
+      "controller": "No owner. The tax rate, the split and where each part goes were fixed at deployment.",
+      "powers": []
+    },
+    {
+      "key": "merchants",
+      "show": true,
+      "name": "Shops",
+      "contract": "ZipMerchants",
+      "control": "none",
+      "role": "Shops stake ZC to be listed and sign every invoice. A shop caught asking to be paid around the tax loses its stake: half to whoever caught it, half burned.",
+      "controller": "No owner.",
+      "powers": []
+    },
+    {
+      "key": "couriers",
+      "show": true,
+      "name": "Couriers",
+      "contract": "ZipCouriers",
+      "control": "none",
+      "role": "Couriers bond ZC and publish an address. They carry proofs, hold them for a random while, and are paid the couriers' share of the tax. A courier that breaks a signed promise can be slashed by anyone holding the receipt.",
+      "controller": "No owner.",
+      "powers": []
+    },
+    {
+      "key": "badges",
+      "show": true,
+      "name": "Badges",
+      "contract": "ZipBadges",
+      "control": "none",
+      "role": "Lock ZC for a while to earn a tier you can prove without saying who you are. The stake goes back into the pool as a new note when the lock ends.",
+      "controller": "No owner.",
+      "powers": []
+    },
+    {
+      "key": "signal",
+      "show": true,
+      "name": "Anonymous posts",
+      "contract": "ZipSignal",
+      "control": "none",
+      "role": "Posts from inside a group (\"someone with a tier-3 badge says...\"), a few per member per day, with no way to link two of them.",
+      "controller": "No owner, and it holds no funds.",
+      "powers": []
+    },
+    {
+      "key": "polls",
+      "show": true,
+      "name": "Polls",
+      "contract": "ZipPolls",
+      "control": "none",
+      "role": "Burn ZC to ask a group a question and pay members to answer. Answers are public and countable; who answered isn't.",
+      "controller": "No owner.",
+      "powers": []
+    },
+    {
+      "key": "broadcaster",
+      "show": true,
+      "name": "Broadcasts",
+      "contract": "ZipBroadcaster",
+      "control": "none",
+      "role": "Burn ZC to be heard. The burn is the signal readers rank messages by.",
+      "controller": "No owner.",
+      "powers": []
+    },
+    {
+      "key": "doorstep",
+      "show": true,
+      "name": "Doorstep",
+      "contract": "ZipDoorstep",
+      "control": "none",
+      "role": "Burn ZC at someone's door, with an optional gift that can never dwarf the burn.",
+      "controller": "No owner.",
+      "powers": []
+    },
+    {
+      "key": "rezip",
+      "show": true,
+      "name": "Private sends",
+      "contract": "ZipRezip",
+      "control": "none",
+      "role": "Spends a note and deposits the value again for the recipient, so the coins never leave the pool.",
+      "controller": "No owner.",
+      "powers": []
+    },
+    {
+      "key": "addressRegistry",
+      "show": true,
+      "name": "Zip addresses",
+      "contract": "ZipAddressRegistry",
+      "control": "none",
+      "role": "Maps a wallet to a public encryption key, so anyone can send to it privately.",
+      "controller": "No owner. Each wallet manages its own entry.",
+      "powers": []
+    },
+    {
+      "key": "bands",
+      "show": true,
+      "name": "Treasury liquidity bands",
+      "contract": "ZipLiquidityBands",
+      "control": "safe",
+      "role": "Receives the treasury's share of the sales tax and adds it to ZC's pool as fixed one-sided ZC bands above the launch range only (never below it), by fixed rules, when a courier triggers it. Fees, and any ETH it receives, go to the treasury Safe.",
+      "controller": "The treasury Safe (2-of-3), within limits fixed at deployment.",
+      "powers": [
+        "Anyone: deposit (within the caps and the minimum interval), collect fees to the Safe, claim the contract's own ETH rewards.",
+        "The Safe only: set the caps (never above the ceilings fixed at deployment), band weights and the share of ETH passed straight to the Safe; pause; forward everything to the Safe; withdraw. Every exit pays the Safe and nothing else."
+      ]
+    },
+    {
+      "key": "safe",
+      "show": true,
+      "name": "The treasury Safe",
+      "contract": "Safe multisig",
+      "control": "safe",
+      "role": "The project treasury. It receives the bands' fees and exits and the pool's harvested ETH rewards, and pays the running costs.",
+      "controller": "A 2-of-3 Safe: any payment needs two of its three signers.",
+      "powers": []
+    },
+    { "key": "batchRelayer", "show": false },
+    { "key": "semaphore", "show": false }
+  ]
+}

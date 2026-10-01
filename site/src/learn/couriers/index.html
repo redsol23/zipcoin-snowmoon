@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Couriers: zipcoin</title>
+<meta name="description" content="The staked layer between you and the chain, and the cover traffic that keeps the pool moving.">
+<link rel="canonical" href="https://zipcoin.org/learn/couriers/">
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#ECF0EC" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#101B1A" media="(prefers-color-scheme: dark)">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/favicon-32.png" type="image/png" sizes="32x32">
+<link rel="manifest" href="/site.webmanifest">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="preload" href="/fonts/newsreader-display.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/fonts/newsreader-text.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="/styles.css">
+<script src="/main.js" defer></script>
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="zipcoin">
+<meta property="og:url" content="https://zipcoin.org/learn/couriers/">
+<meta property="og:title" content="Couriers">
+<meta property="og:description" content="The staked layer between you and the chain, and the cover traffic that keeps the pool moving.">
+<meta property="og:image" content="https://zipcoin.org/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="A snow moon over a winter valley with stone houses, and the words: the private money of Snowmoon, on Ethereum.">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Couriers">
+<meta name="twitter:description" content="The staked layer between you and the chain, and the cover traffic that keeps the pool moving.">
+<meta name="twitter:image" content="https://zipcoin.org/og.png">
+<meta name="twitter:image:alt" content="A snow moon over a winter valley with stone houses, and the words: the private money of Snowmoon, on Ethereum.">
+</head>
+<body class="page-learn">
+<a class="skip" href="#main">Skip to content</a>
+<!--art:defs-->
+
+<!--part:header-->
+
+<main id="main">
+
+<section class="page-head page-head-topic" aria-labelledby="topic-title">
+  <div class="wrap">
+    <p class="crumb"><a href="/learn/">How it works</a></p>
+    <h1 id="topic-title">Couriers</h1>
+    <p class="intro">The staked layer between you and the chain, and the cover traffic that keeps the pool moving.</p>
+  </div>
+</section>
+
+<section id="couriers" class="band night" aria-label="The courier network">
+  <div class="wrap grid">
+    <div class="couriers-quote couriers-quote-full">
+      <figure class="quote quote-essay">
+        <blockquote><p>A stronger decentralized layer in the middle between users and a chain, that is not itself a chain.</p></blockquote>
+        <figcaption>Vitalik Buterin, <a href="https://vitalik.eth.limo/general/2026/09/27/the_cryptographic_world_computer.html"><cite>The cryptographic world computer</cite></a></figcaption>
+      </figure>
+      <p class="intro">The couriers are that layer for zipcoin. In the novel, people pay others to rebroadcast their messages anonymously. Here, couriers carry your sealed proofs to the chain.</p>
+    </div>
+    <div class="couriers-art"><!--art:courier--></div>
+    <ul class="points">
+      <li><h3>Spends that never touch your wallet</h3><p>When you spend, couriers submit for you, so the spend never touches a wallet that could identify you. They stake ZC to do the job.</p></li>
+      <li><h3>Timing that says nothing</h3><p>A courier can hold a proof and send it at a random moment. It signs a receipt for the job, and if it doesn't deliver when it could have, anyone can slash its stake.</p></li>
+      <li><h3>Nothing taken on trust</h3><p>Couriers serve the pool's state, and anyone can check it against the chain's own records, so no courier has to be believed.</p></li>
+      <li><h3>They can't change your job</h3><p>A courier can delay or refuse a job, but never change it: your proof fixes the recipient, the amounts, the message and the courier's own fee.</p></li>
+    </ul>
+
+    <section class="cover" aria-labelledby="cover-title">
+      <div class="cover-copy">
+        <h3 id="cover-title">The pool is never quiet</h3>
+        <p class="cover-lead">Couriers keep the pool moving. At random moments they zip coins in, pass notes back into the pool and take some out, a part of a note at a time, the way people pay. Your deposit and your spend stop lining up.</p>
+        <ul class="cover-list">
+          <li>Each courier keeps some ZC zipped. At random moments it zips fresh coins in, rezips part of a note back into the pool, or unzips part and zips it back later.</li>
+          <li>Its moves are ordinary sizes: a few dozen coins in, or part of a note out, like someone splitting a payment.</li>
+          <li>A daily gas budget caps it, and it never trades or touches the market. Pool actions only.</li>
+          <li>So the pool always has background activity. A real deposit followed by a real spend no longer stands out in time, and every rezip looks like anyone else's.</li>
+          <li>Veridia's residents add everyday traffic of their own: they keep their savings in the same pool and send through the same couriers. <a href="/learn/veridia/">More on Veridia</a>.</li>
+        </ul>
+        <p class="cover-limit"><strong>The honest limit:</strong> a courier's own deposits come from its known wallet, so the strongest cover is its rezips and the timing noise.</p>
+      </div>
+      <figure class="cover-art"><!--art:cover--></figure>
+    </section>
+  </div>
+</section>
+
+<nav class="pager wrap" aria-label="More topics">
+  <a class="pager-prev" rel="prev" href="/learn/tax/">← Previous: Sales tax</a>
+  <a class="pager-hub" href="/learn/">All topics</a>
+  <a class="pager-next" rel="next" href="/learn/veridia/">Next: Veridia →</a>
+</nav>
+
+</main>
+
+<!--part:footer-->
+</body>
+</html>

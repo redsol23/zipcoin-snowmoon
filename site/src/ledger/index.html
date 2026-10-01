@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The ledger: zipcoin</title>
+<meta name="description" content="Every zipcoin contract and wallet, what it's for, who can change it, and the money moving through it, read from Ethereum.">
+<link rel="canonical" href="https://zipcoin.org/ledger/">
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#ECF0EC" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#101B1A" media="(prefers-color-scheme: dark)">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/favicon-32.png" type="image/png" sizes="32x32">
+<link rel="manifest" href="/site.webmanifest">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="preload" href="/fonts/newsreader-display.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/fonts/newsreader-text.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="/styles.css">
+<link rel="stylesheet" href="/data.css">
+<script src="/main.js" defer></script>
+<script src="/data.js" defer></script>
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="zipcoin">
+<meta property="og:url" content="https://zipcoin.org/ledger/">
+<meta property="og:title" content="The ledger">
+<meta property="og:description" content="Every zipcoin contract and wallet, what it's for, who can change it, and the money moving through it, read from Ethereum.">
+<meta property="og:image" content="https://zipcoin.org/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="A snow moon over a winter valley with stone houses, and the words: the private money of Snowmoon, on Ethereum.">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="The ledger">
+<meta name="twitter:description" content="Every zipcoin contract and wallet, what it's for, who can change it, and the money moving through it, read from Ethereum.">
+<meta name="twitter:image" content="https://zipcoin.org/og.png">
+<meta name="twitter:image:alt" content="A snow moon over a winter valley with stone houses, and the words: the private money of Snowmoon, on Ethereum.">
+</head>
+<body class="page-learn page-data" data-page="ledger">
+<a class="skip" href="#main">Skip to content</a>
+<!--art:defs-->
+
+<!--part:header-->
+
+<main id="main">
+
+<section class="page-head page-head-topic" aria-labelledby="page-title">
+  <div class="wrap">
+    <h1 id="page-title">The ledger</h1>
+    <p class="intro">Every contract and wallet the project runs: what it's for, who can change it, and the money moving through it. Read from Ethereum every minute.</p>
+    <p class="lg-state" data-live-state="waiting" aria-live="polite"><span class="lg-dot" aria-hidden="true"></span><span data-live-text><strong>Goes live at launch.</strong> zipcoin isn't on mainnet yet. Who controls what is below now; the numbers fill in once the contracts are live.</span></p>
+    <ul class="toc">
+      <li><a href="#flows">Money moving</a></li>
+      <li><a href="#contracts">Who controls what</a></li>
+      <li><a href="#read">How to read this</a></li>
+      <li><a href="/privacy-meter/">Privacy meter</a></li>
+      <li><a href="/status/">Status</a></li>
+    </ul>
+  </div>
+</section>
+
+<section id="flows" class="lg-band" aria-labelledby="flows-title">
+  <div class="wrap">
+    <div class="lg-bar">
+      <h2 id="flows-title" class="lg-h2">Money moving</h2>
+      <div class="lg-win" role="group" aria-label="Time window" hidden>
+        <button type="button" data-win="24h" aria-pressed="false">24 hours</button>
+        <button type="button" data-win="7d" aria-pressed="true">7 days</button>
+        <button type="button" data-win="all" aria-pressed="false">All time</button>
+      </div>
+    </div>
+    <ul class="lg-flows">
+      <li class="lg-flow" data-flow="salesTax">
+        <h3>Sales tax</h3>
+        <p class="lg-flow-sum">Every payment settles its tax in the same proof, split three ways. <span data-v="salesTax.count"></span></p>
+        <div class="lg-split" aria-hidden="true"><span class="lg-split-burn" data-w="burned"></span><span class="lg-split-couriers" data-w="couriers"></span><span class="lg-split-treasury" data-w="treasury"></span></div>
+        <dl class="lg-figs">
+          <div class="lg-fig-burn"><dt>Burned</dt><dd data-v="salesTax.burned">—</dd></div>
+          <div class="lg-fig-couriers"><dt>To couriers</dt><dd data-v="salesTax.couriers">—</dd></div>
+          <div class="lg-fig-treasury"><dt>Treasury's share</dt><dd data-v="salesTax.treasury">—</dd></div>
+        </dl>
+      </li>
+      <li class="lg-flow" data-flow="bands">
+        <h3>Treasury liquidity bands</h3>
+        <p class="lg-flow-sum">The treasury's share (ZC) goes into ZC's pool as fixed bands above the launch range only, never below it. Their fees, and any ETH the bands receive, go to the Safe.</p>
+        <dl class="lg-figs">
+          <div><dt>ZC into the bands</dt><dd data-v="bands.deposited.zc">—</dd></div>
+          <div><dt>Fees to the Safe</dt><dd><span data-v="bands.feesToSafe.eth">—</span><span class="lg-and" data-v="bands.feesToSafe.zc"></span></dd></div>
+          <div><dt>ETH forwarded to the Safe</dt><dd data-v="bands.ethToSafe.eth">—</dd></div>
+        </dl>
+      </li>
+      <li class="lg-flow" data-flow="poolHarvests">
+        <h3>Pool rewards</h3>
+        <p class="lg-flow-sum">ZC pays its holders ETH. The pool's share belongs to no depositor, so a harvest sends it to the treasury. <span data-v="poolHarvests.count"></span></p>
+        <dl class="lg-figs">
+          <div><dt>Harvested to the treasury</dt><dd data-v="poolHarvests.forwarded">—</dd></div>
+        </dl>
+      </li>
+      <li class="lg-flow" data-flow="emerald" hidden>
+        <h3>Emerald</h3>
+        <p class="lg-flow-sum">The wallet's assistant, paid per message from a zipped note: part burned, the rest to the treasury, which pays its bills.</p>
+        <dl class="lg-figs">
+          <div><dt>To the treasury</dt><dd data-v="emerald.toTreasury.zc">—</dd></div>
+          <div class="lg-fig-burn"><dt>Burned</dt><dd data-v="emerald.burned.zc">—</dd></div>
+        </dl>
+      </li>
+    </ul>
+    <p class="lg-fine">Totals of on-chain events in the window, not people: nothing here says who paid. Not investment advice.</p>
+  </div>
+</section>
+
+<section id="contracts" class="lg-band lg-band-paper" aria-labelledby="contracts-title">
+  <div class="wrap">
+    <h2 id="contracts-title" class="lg-h2">Who controls what</h2>
+    <p class="intro">Each contract and wallet, what it does, and exactly who can change it. “No owner” means nobody can: not us, not anyone.</p>
+    <!--art:ledger-contracts-->
+  </div>
+</section>
+
+<section id="read" class="lg-band" aria-labelledby="read-title">
+  <div class="wrap">
+    <h2 id="read-title" class="lg-h2">How to read this</h2>
+    <ul class="points lg-points">
+      <li><h3>Every number comes from Ethereum</h3><p>The ledger reads the contracts' events and balances once a minute. Each address links to Etherscan, so you can check any of it yourself.</p></li>
+      <li><h3>Totals, never people</h3><p>The sales tax is summed from each payment's split, and the pool's rewards from each harvest. Nothing here says who paid or who deposited.</p></li>
+      <li><h3>ETH rewards waiting</h3><p>ZC pays its holders in ETH. The privacy pool's share belongs to no single depositor, so anyone can harvest it to the project treasury.</p></li>
+      <li><h3>Only what's live</h3><p>The list shows the contracts that are public and running. Features still being built join it on the day they launch.</p></li>
+      <li><h3>A Safe needs two of three</h3><p>Where a Safe has powers, any action needs two of its three signers, and the powers are listed in full. The signers' count is read from the chain; their addresses aren't shown.</p></li>
+      <li><h3>First-party only</h3><p>This page reads one address, api.zipcoin.org, run by the project. No third parties, no cookies, and it logs nothing about who looked.</p></li>
+    </ul>
+    <p class="lg-fine">Numbers can lag the chain by a minute or two. Nothing here is investment advice.</p>
+  </div>
+</section>
+
+<nav class="pager wrap" aria-label="More">
+  <a class="pager-prev" href="/learn/tax/">← Sales tax</a>
+  <a class="pager-hub" href="/status/">Status</a>
+  <a class="pager-next" href="/privacy-meter/">Privacy meter →</a>
+</nav>
+
+</main>
+
+<!--part:footer-->
+</body>
+</html>

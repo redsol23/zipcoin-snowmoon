@@ -13,18 +13,81 @@ import {ISemaphore} from '@semaphore-protocol/contracts/interfaces/ISemaphore.so
 import {ISemaphoreVerifier} from '@semaphore-protocol/contracts/interfaces/ISemaphoreVerifier.sol';
 
 import {Entrypoint} from 'contracts/Entrypoint.sol';
-import {PrivacyPoolComplex} from 'contracts/implementations/PrivacyPoolComplex.sol';
 import {Constants} from 'contracts/lib/Constants.sol';
 import {ProofLib} from 'contracts/lib/ProofLib.sol';
 import {CommitmentVerifier} from 'contracts/verifiers/CommitmentVerifier.sol';
 import {WithdrawalVerifier} from 'contracts/verifiers/WithdrawalVerifier.sol';
 import {IPrivacyPool} from 'interfaces/IPrivacyPool.sol';
 
+import {ZipPrivacyPool} from 'zipnet/ZipPrivacyPool.sol';
+
+/**
+ * @notice Test ZC that pays ETH holder rewards the way the real token (LaunchToken) does: a reward-per-token
+ *         accumulator over every holder not excluded, settled on every transfer in `_update`, paid by `claim()` with a
+ *         full-gas `call`. It is excluded from rewards at launch, and so is 0xdead (like the real token's PoolManager and
+ *         locker exclusions, which tests can add with `excludeFromRewards`). `distributeRewards` stands in for the
+ *         token's fee income.
+ */
 contract MockZC is ERC20 {
-  constructor() ERC20('zipcoin', 'ZC') {}
+  uint256 private constant ACC = 1e36;
+
+  mapping(address => bool) public isExcludedFromRewards;
+  uint256 public rewardPerToken;
+  uint256 public eligibleSupply;
+  mapping(address => uint256) private _paid;
+  mapping(address => uint256) private _accrued;
+
+  error NothingToClaim();
+  error RewardTransferFailed();
+  error NoEligibleHolders();
+
+  constructor() ERC20('zipcoin', 'ZC') {
+    isExcludedFromRewards[address(this)] = true;
+    isExcludedFromRewards[0x000000000000000000000000000000000000dEaD] = true;
+  }
 
   function mint(address _to, uint256 _amount) external {
     _mint(_to, _amount);
+  }
+
+  function excludeFromRewards(address _holder) external {
+    if (isExcludedFromRewards[_holder]) return;
+    _settle(_holder);
+    isExcludedFromRewards[_holder] = true;
+    eligibleSupply -= balanceOf(_holder);
+  }
+
+  /// @notice Spreads msg.value over the eligible supply
+  function distributeRewards() external payable {
+    if (eligibleSupply == 0) revert NoEligibleHolders();
+    rewardPerToken += (msg.value * ACC) / eligibleSupply;
+  }
+
+  function pendingReward(address _holder) public view returns (uint256) {
+    if (isExcludedFromRewards[_holder]) return _accrued[_holder];
+    return _accrued[_holder] + (balanceOf(_holder) * (rewardPerToken - _paid[_holder])) / ACC;
+  }
+
+  function claim() external returns (uint256 _amount) {
+    _settle(msg.sender);
+    _amount = _accrued[msg.sender];
+    if (_amount == 0) revert NothingToClaim();
+    _accrued[msg.sender] = 0;
+    (bool _ok,) = msg.sender.call{value: _amount}('');
+    if (!_ok) revert RewardTransferFailed();
+  }
+
+  function _settle(address _holder) internal {
+    _accrued[_holder] = pendingReward(_holder);
+    _paid[_holder] = rewardPerToken;
+  }
+
+  function _update(address _from, address _to, uint256 _value) internal override {
+    if (_from != address(0)) _settle(_from);
+    if (_to != address(0)) _settle(_to);
+    super._update(_from, _to, _value);
+    if (_from != address(0) && !isExcludedFromRewards[_from]) eligibleSupply -= _value;
+    if (_to != address(0) && !isExcludedFromRewards[_to]) eligibleSupply += _value;
   }
 }
 
@@ -47,10 +110,11 @@ abstract contract ZipnetBase is Test {
 
   address internal owner = makeAddr('owner');
   address internal postman = makeAddr('postman');
+  address payable internal poolTreasury = payable(makeAddr('poolTreasury'));
 
   MockZC internal zc;
   Entrypoint internal entrypoint;
-  PrivacyPoolComplex internal pool;
+  ZipPrivacyPool internal pool;
   uint256 internal scope;
   ISemaphore internal semaphore;
 
@@ -64,8 +128,8 @@ abstract contract ZipnetBase is Test {
     entrypoint = Entrypoint(
       payable(address(new ERC1967Proxy(_impl, abi.encodeCall(Entrypoint.initialize, (owner, postman)))))
     );
-    pool = new PrivacyPoolComplex(
-      address(entrypoint), address(new WithdrawalVerifier()), address(new CommitmentVerifier()), address(zc)
+    pool = new ZipPrivacyPool(
+      address(entrypoint), address(new WithdrawalVerifier()), address(new CommitmentVerifier()), address(zc), poolTreasury
     );
     vm.prank(owner);
     entrypoint.registerPool(IERC20(address(zc)), IPrivacyPool(address(pool)), 1 ether, 0, 500);

@@ -32,6 +32,11 @@ export type Requirement = {
     pricePerCall: string;
     suggestedCalls: number;
     taxBps: string;
+    /**
+     * More ZipPay payments that belong to the same purchase, each to its own merchant and with the same orderId (e.g.
+     * a share whose payout is the burn address). The purchase buys calls only once every part has landed.
+     */
+    split?: { merchantId: string; pricePerCall: string }[];
   };
 };
 
@@ -41,11 +46,15 @@ export type PaymentPayload = { x402Version: number; scheme: typeof SCHEME; netwo
 
 export const orderIdOf = (orderSecret: Hex) => keccak256(orderSecret);
 
-export const encodePaymentHeader = (p: PaymentPayload) => Buffer.from(JSON.stringify(p)).toString("base64");
+// Base64 that works in Node and in browsers (the header is ASCII JSON, so btoa/atob are enough there)
+const toB64 = (s: string) => (typeof Buffer !== "undefined" ? Buffer.from(s).toString("base64") : btoa(s));
+const fromB64 = (s: string) => (typeof Buffer !== "undefined" ? Buffer.from(s, "base64").toString("utf8") : atob(s));
+
+export const encodePaymentHeader = (p: PaymentPayload) => toB64(JSON.stringify(p));
 
 export function decodePaymentHeader(header: string): PaymentPayload | null {
   try {
-    const p = JSON.parse(Buffer.from(header, "base64").toString("utf8")) as PaymentPayload;
+    const p = JSON.parse(fromB64(header)) as PaymentPayload;
     if (p.scheme !== SCHEME || !/^0x[0-9a-fA-F]{64}$/.test(p.payload?.orderSecret ?? "")) return null;
     return p;
   } catch {

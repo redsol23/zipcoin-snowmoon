@@ -15,6 +15,42 @@ export function toWei(s: string): bigint | null {
   }
 }
 
+/**
+ * Reverts from the pool that reach us undecoded (the courier has no ABI for them), by selector. They all mean the
+ * wallet's view was a moment behind the chain, so trying again fixes them.
+ */
+const POOL_REVERTS: Record<string, string> = {
+  "0xb115d857": "That note was spent a moment ago and the wallet hadn't caught up. Wait a few seconds and try again.", // NullifierAlreadySpent
+  "0xa6a78244": "The list of cleared notes changed while this was being proved. Try again.", // IncorrectASPRoot
+  "0xfd3d3c4c": "The pool moved on while this was being proved. Try again.", // UnknownStateRoot
+};
+
+/** A known pool revert in an error message, as a sentence, or null. */
+export function poolRevert(message: string): string | null {
+  const sel = message.match(/0x[0-9a-fA-F]{8}\b/)?.[0]?.toLowerCase();
+  return (sel && POOL_REVERTS[sel]) || null;
+}
+
+/**
+ * One line to show for an error. viem puts an undecoded revert's selector on the line after "reverted with the
+ * following signature:", so keep it rather than ending the sentence on a colon.
+ */
+export function errorText(e: unknown): string {
+  const message = e instanceof Error ? e.message : String(e);
+  const known = poolRevert(message);
+  if (known) return known;
+  const [first = "", second] = message.split("\n");
+  const line = first.trimEnd().endsWith(":") && second ? `${first.trim()} ${second.trim().split(/\s/)[0]}` : first;
+  // A courier flattens viem's details onto one line; the call's addresses and arguments mean nothing to a person
+  return line.replace(/\s+(Contract Call|Docs|Details|Version):.*$/, "");
+}
+
+/** A courier job that it sent but that reverted on-chain comes back with status "failed": that's not a success. */
+export function checkJob<J extends { status: string; tx?: string }>(j: J): J {
+  if (j.status === "failed") throw new Error(`The courier sent it, but it failed on-chain${j.tx ? ` (transaction ${j.tx.slice(0, 10)}…)` : ""}. Nothing was spent; try again.`);
+  return j;
+}
+
 export function Field({ label, hint, children }: { label: string; hint?: React.ReactNode; children: React.ReactNode }) {
   return (
     <label className="block">

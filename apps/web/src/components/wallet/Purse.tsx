@@ -4,7 +4,8 @@ import { zipAddressRegistryAbi } from "@zipnet/sdk";
 import { useEffect, useState } from "react";
 import type { Hex } from "viem";
 
-import { Button, inputCls, zc } from "./ui";
+import { ConnectPicker } from "./ConnectPicker";
+import { Button, errorText, inputCls, zc } from "./ui";
 import { useWallet } from "./WalletProvider";
 
 /** Connection, zip key and balances: everything above the actions. */
@@ -22,7 +23,7 @@ export function Purse() {
     try {
       await fn();
     } catch (e) {
-      setErr((e as Error).message.split("\n")[0]);
+      setErr(errorText(e));
     } finally {
       setBusy(null);
     }
@@ -41,25 +42,25 @@ export function Purse() {
     return (
       <div className="space-y-3">
         <p className="max-w-xl leading-relaxed">Connect a wallet to zip coins into the pool, send them privately, and pay with the sales tax included.</p>
-        <div className="flex flex-wrap gap-3">
-          <Button onClick={act("injected", w.connectInjected)} busy={busy === "injected"}>
-            Connect wallet
-          </Button>
-          {w.config?.devWallet && (
-            <Button tone="quiet" onClick={act("dev", w.connectDev)} busy={busy === "dev"}>
-              Use a dev wallet (local chain)
-            </Button>
-          )}
-        </div>
-        {err && <p className="text-sm text-pine">{err}</p>}
+        <ConnectPicker />
       </div>
     );
   }
 
+  const connectedAs = (
+    <span>
+      {w.walletName ? `${w.walletName}: ` : ""}
+      {w.address}{" "}
+      <button className="underline underline-offset-2 hover:text-pine" onClick={act("disconnect", w.disconnect)}>
+        Disconnect
+      </button>
+    </span>
+  );
+
   if (!w.zip) {
     return (
       <div className="space-y-3">
-        <p className="text-sm text-lichen">Connected as {w.address}</p>
+        <p className="text-sm text-lichen">Connected: {connectedAs}</p>
         <p className="max-w-xl leading-relaxed">
           Unlock your zip key by signing a message. The key is derived in this browser from the signature and never leaves it; the same
           wallet always unlocks the same coins.
@@ -105,7 +106,7 @@ export function Purse() {
         </div>
       </dl>
       <div className="mt-4 flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-lichen">
-        <span>{w.address}</span>
+        {connectedAs}
         {w.pool && !w.pool.verified && <span className="text-pine">The courier&apos;s view doesn&apos;t match the chain yet; retrying.</span>}
         {registered === false && (
           <Button

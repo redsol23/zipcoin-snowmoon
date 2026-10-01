@@ -1,0 +1,24 @@
+# Build context filter for docker/web.Dockerfile (BuildKit reads <Dockerfile>.dockerignore).
+**/node_modules
+**/.next
+**/*.tsbuildinfo
+.git
+.claude
+.local
+.courier
+.veridia
+.postman-state.json
+**/.env
+**/.env.*
+**/*.key
+contracts/lib
+contracts/out
+contracts/cache
+contracts/broadcast
+contracts/deployments
+apps/web/public/artifacts
+packages/sdk/artifacts/semaphore/*.wasm
+packages/sdk/artifacts/semaphore/*.zkey
+site
+docs
+deploy

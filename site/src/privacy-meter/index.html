@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Privacy meter: zipcoin</title>
+<meta name="description" content="How big is the crowd you hide in? The different outside addresses that deposited into the pool, counted honestly, with the method in full.">
+<link rel="canonical" href="https://zipcoin.org/privacy-meter/">
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#ECF0EC" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#101B1A" media="(prefers-color-scheme: dark)">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/favicon-32.png" type="image/png" sizes="32x32">
+<link rel="manifest" href="/site.webmanifest">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="preload" href="/fonts/newsreader-display.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/fonts/newsreader-text.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="/styles.css">
+<link rel="stylesheet" href="/data.css">
+<script src="/main.js" defer></script>
+<script src="/data.js" defer></script>
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="zipcoin">
+<meta property="og:url" content="https://zipcoin.org/privacy-meter/">
+<meta property="og:title" content="Privacy meter">
+<meta property="og:description" content="How big is the crowd you hide in? The different outside addresses that deposited into the pool, counted honestly, with the method in full.">
+<meta property="og:image" content="https://zipcoin.org/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="A snow moon over a winter valley with stone houses, and the words: the private money of Snowmoon, on Ethereum.">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Privacy meter">
+<meta name="twitter:description" content="How big is the crowd you hide in? The different outside addresses that deposited into the pool, counted honestly, with the method in full.">
+<meta name="twitter:image" content="https://zipcoin.org/og.png">
+<meta name="twitter:image:alt" content="A snow moon over a winter valley with stone houses, and the words: the private money of Snowmoon, on Ethereum.">
+</head>
+<body class="page-learn page-data" data-page="privacy">
+<a class="skip" href="#main">Skip to content</a>
+<!--art:defs-->
+
+<!--part:header-->
+
+<main id="main">
+
+<section class="page-head page-head-topic" aria-labelledby="page-title">
+  <div class="wrap">
+    <p class="crumb"><a href="/ledger/">The ledger</a></p>
+    <h1 id="page-title">Privacy meter</h1>
+    <p class="intro">A zipped coin hides among everyone else's, so the pool is only as private as the crowd in it. This is that crowd, counted without the project's own wallets.</p>
+    <p class="lg-state" data-live-state="waiting" aria-live="polite"><span class="lg-dot" aria-hidden="true"></span><span data-live-text><strong>Goes live at launch.</strong> zipcoin isn't on mainnet yet, so there is no crowd to count. How we'll count it is below.</span></p>
+  </div>
+</section>
+
+<section id="meter" class="lg-band" aria-labelledby="meter-title">
+  <div class="wrap">
+    <div class="lg-bar">
+      <h2 id="meter-title" class="lg-h2">The crowd</h2>
+      <div class="lg-win" role="group" aria-label="Time window" hidden>
+        <button type="button" data-win="24h" aria-pressed="false">24 hours</button>
+        <button type="button" data-win="7d" aria-pressed="true">7 days</button>
+        <button type="button" data-win="all" aria-pressed="false">All time</button>
+      </div>
+    </div>
+    <div class="pm-grid">
+      <div class="pm-main">
+        <p class="pm-big"><span class="pm-num" data-p="outsideDepositors">—</span></p>
+        <p class="pm-cap">different outside addresses put ZC into the pool <span data-p="windowLabel">in this window</span>.</p>
+        <dl class="lg-figs pm-figs">
+          <div><dt>Deposits, all</dt><dd data-p="deposits">—</dd></div>
+          <div class="lg-fig-couriers"><dt>From outside</dt><dd data-p="outsideDeposits">—</dd></div>
+          <div class="lg-fig-treasury"><dt>From the project's own wallets</dt><dd data-p="projectDeposits">—</dd></div>
+        </dl>
+      </div>
+      <div class="pm-sizes">
+        <h3>Deposit sizes, from outside</h3>
+        <ul class="pm-buckets">
+          <li><span class="pm-b-label">Under 100 ZC</span><span class="pm-b-bar"><span data-b="0"></span></span><span class="pm-b-n" data-bn="0">—</span></li>
+          <li><span class="pm-b-label">100 to 1,000</span><span class="pm-b-bar"><span data-b="1"></span></span><span class="pm-b-n" data-bn="1">—</span></li>
+          <li><span class="pm-b-label">1,000 to 10,000</span><span class="pm-b-bar"><span data-b="2"></span></span><span class="pm-b-n" data-bn="2">—</span></li>
+          <li><span class="pm-b-label">10,000 to 100,000</span><span class="pm-b-bar"><span data-b="3"></span></span><span class="pm-b-n" data-bn="3">—</span></li>
+          <li><span class="pm-b-label">100,000 and up</span><span class="pm-b-bar"><span data-b="4"></span></span><span class="pm-b-n" data-bn="4">—</span></li>
+        </ul>
+        <p class="lg-fine">Wide buckets on purpose: an odd, exact amount is easier to follow in and out of the pool than a common one.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="method" class="lg-band lg-band-paper" aria-labelledby="method-title">
+  <div class="wrap grid">
+    <div class="pm-method">
+      <h2 id="method-title" class="lg-h2">How we count</h2>
+      <p class="intro">We count the different addresses that put ZC into the privacy pool, and leave out every address the project itself controls. What's left is the crowd a deposit disappears into.</p>
+      <ol class="pm-steps">
+        <li><strong>Read every deposit.</strong> Each Deposited event from the pool is already public on Ethereum: the address that deposited and the amount.</li>
+        <li><strong>Leave out the project's own.</strong> Every zipcoin contract (private sends and shop revenue go back into the pool through them), the treasury Safe, the Entrypoint's owner and postman, every address that has bonded as a courier (couriers make cover traffic from their own wallets), the wallets the operators run (Veridia's residents and treasury, couriers' cover wallets), and any wallet a project funding wallet sent ZC to.</li>
+        <li><strong>Count what's left</strong> in each window: deposits, the different addresses behind them, and their sizes in five wide buckets.</li>
+      </ol>
+    </div>
+    <div class="pm-caveats">
+      <h3>What the number can't tell you</h3>
+      <ul class="tax-split">
+        <li>One person can use many addresses, and a project wallet we don't know about counts as outside, so there may be fewer people than it shows.</li>
+        <li>A deposit from a smart wallet or an exchange can stand for several people, so there may also be more.</li>
+        <li>Addresses aren't people, and we never label an address as a user. Only counts are published; every deposit behind them is on-chain already.</li>
+        <li>Timing and amounts matter too. A big crowd helps less if you deposit and withdraw the same odd amount a minute apart. See <a href="/learn/privacy/">Privacy</a>.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<nav class="pager wrap" aria-label="More">
+  <a class="pager-prev" href="/ledger/">← The ledger</a>
+  <a class="pager-hub" href="/learn/privacy/">How privacy works</a>
+  <a class="pager-next" href="/status/">Status →</a>
+</nav>
+
+</main>
+
+<!--part:footer-->
+</body>
+</html>

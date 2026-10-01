@@ -1,0 +1,48 @@
+# Edge proxy for the web app (app.<domain>), behind cloudflared. Plain HTTP inside the compose
+# network; TLS terminates at Cloudflare. ZIPNET_DOMAIN comes from the compose environment.
+#
+# What it adds that a bare tunnel can't:
+# - framing: app.<domain> is never framed (it holds the whole wallet: clickjacking protection)
+# - internal routes stay internal: the local-only dev pages are never exposed
+# - no access log (no visitor addresses on disk)
+{
+	admin off
+	auto_https off
+	persist_config off
+	# Visitor address for the app's logs and rate limits: cloudflared is the only client, and it sends the
+	# visitor's address in Cf-Connecting-Ip
+	servers {
+		trusted_proxies static private_ranges
+		client_ip_headers Cf-Connecting-Ip
+	}
+}
+
+# Container healthcheck
+:8081 {
+	respond /healthz 200
+}
+
+:8080 {
+	# The dev pages are local-chain only
+	@internal path /api/dev/* /dev/*
+	respond @internal 404
+
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options "nosniff"
+		Referrer-Policy "no-referrer"
+		Permissions-Policy "camera=(), microphone=(), geolocation=(), interest-cohort=()"
+		-Server
+		-X-Powered-By
+	}
+	# Never framed
+	header {
+		Content-Security-Policy "frame-ancestors 'none'"
+		X-Frame-Options "DENY"
+	}
+
+	reverse_proxy web:3100 {
+		header_up X-Forwarded-For {client_ip}
+		header_up X-Real-IP {client_ip}
+	}
+}

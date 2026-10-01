@@ -4,10 +4,10 @@
   "type": "module",
   "scripts": {
     "start": "tsx src/main.ts",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test": "node --import tsx --test src/budget.test.ts src/deepseek.test.ts src/story.test.ts src/slots.test.ts"
   },
   "dependencies": {
-    "@anthropic-ai/sdk": "latest",
     "@scure/bip39": "2.4.0",
     "@semaphore-protocol/core": "4.14.3",
     "@zipnet/sdk": "workspace:*",

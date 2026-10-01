@@ -8,6 +8,9 @@ import "./globals.css";
 const newsreader = Newsreader({ subsets: ["latin"], variable: "--font-newsreader", style: ["normal", "italic"], display: "swap" });
 const plex = IBM_Plex_Sans({ subsets: ["latin"], weight: ["400", "500", "600"], variable: "--font-plex", display: "swap" });
 
+// Every page renders per request, so Next can put the CSP nonce from src/middleware.ts on its scripts
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = {
   title: "Veridia",
   description:

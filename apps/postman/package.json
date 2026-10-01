@@ -4,11 +4,16 @@
   "type": "module",
   "scripts": {
     "start": "tsx src/main.ts",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test": "tsx --test src/caps.test.ts src/postman.test.ts src/trust.test.ts"
   },
   "dependencies": {
     "@zipnet/sdk": "workspace:*",
     "viem": "2.56.8"
   },
-  "devDependencies": { "@types/node": "^22", "tsx": "^4.19.0", "typescript": "^5.7.0" }
+  "devDependencies": {
+    "@types/node": "^22",
+    "tsx": "^4.19.0",
+    "typescript": "^5.7.0"
+  }
 }

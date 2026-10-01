@@ -63,7 +63,8 @@ export default async function Network() {
       <p className="mt-4 leading-relaxed text-pine/85">
         Privacy needs a crowd. A pool with six deposits hides nobody. Veridia&apos;s residents live their days on the same pool, so there is
         always ordinary traffic around a real person&apos;s payment. They only ever move coins through the pool and never trade the token. You
-        can follow every one of them, because the story is public even when the chain can&apos;t tell who did what.
+        can follow their story, but it is told a little late and leaves out the shop, the amount and the exact time, so it can&apos;t be
+        matched to the transactions it describes.
       </p>
     </div>
   );

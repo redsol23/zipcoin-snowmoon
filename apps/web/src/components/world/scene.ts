@@ -45,6 +45,15 @@ export const SPOT = {
   board: { x: 350, y: 322 },
   square: { x: 975, y: 590 },
   toll: { x: 820, y: 590 },
+  /** The couriers' post: sealed proofs are carried here and held a while before they are sent */
+  couriers: { x: 885, y: 548 },
+  silverchat: { x: 1232, y: 628 },
+  school: { x: 195, y: 745 },
+  lessons: { x: 150, y: 706 },
+  pier: { x: 262, y: 792 },
+  skyBridge: { x: 505, y: 268 },
+  lenSu: { x: 1060, y: 282 },
+  ballot: { x: 1006, y: 584 },
 } satisfies Record<string, Pt>;
 
 /** Shops, keyed by the resident id that runs them and matched to the shop name the story uses. */
@@ -59,6 +68,45 @@ export const TRUCKS: Pt[] = [
   { x: 1300, y: 470 },
   { x: 1360, y: 492 },
   { x: 1402, y: 448 },
+];
+
+/** The forest path through Kalimar, sampled from the painted curve so walkers can follow it. */
+export const FOREST_PATH: Pt[] = Array.from({ length: 9 }, (_, i) => {
+  const t = i / 8;
+  const u = 1 - t;
+  return {
+    x: u * u * u * 430 + 3 * u * u * t * 400 + 3 * u * t * t * 520 + t * t * t * 480,
+    y: u * u * u * 440 + 3 * u * u * t * 500 + 3 * u * t * t * 520 + t * t * t * 585,
+  };
+});
+
+/** Lamps and lanterns that glow from dusk to dawn: the forest path, Len Su street, the pier, the couriers' post. */
+export const LAMPS: Pt[] = [
+  ...[2, 4, 6].map((i) => ({ x: FOREST_PATH[i].x + 7, y: FOREST_PATH[i].y - 12 })),
+  ...[0, 1, 2, 3].map((i) => ({ x: 1022 + i * 48, y: 268 - i * 14 })),
+  { x: 314, y: 808 },
+  { x: SPOT.couriers.x + 19, y: SPOT.couriers.y - 12 },
+];
+
+/** Places a visitor can hover or tap for a word about what happens there. */
+export const LANDMARKS: { id: string; at: Pt; r: number; name: string; note: string }[] = [
+  { id: "archive", at: SPOT.archive, r: 24, name: "The archive node", note: "A digital archive inside the mountain. People burn zipcoins to point each other to what is kept here." },
+  { id: "board", at: { x: SPOT.board.x + 19, y: SPOT.board.y - 14 }, r: 26, name: "The board", note: "Badge holders post here without signing. The proof says a member wrote it, never which one." },
+  { id: "square", at: SPOT.square, r: 34, name: "Freetown's square", note: "Where a poll gathers people. Everyone with a badge can answer once, and nobody learns who answered what." },
+  {
+    id: "couriers",
+    at: { x: SPOT.couriers.x, y: SPOT.couriers.y - 12 },
+    r: 22,
+    name: "The couriers' post",
+    note: "Couriers carry sealed proofs and hold each one a while before sending it, so the timing gives nobody away. Part of every sales tax pays them.",
+  },
+  { id: "toll", at: { x: SPOT.toll.x, y: SPOT.toll.y - 12 }, r: 18, name: "Freetown's toll road", note: "The busiest road on the map, with its toll gate." },
+  { id: "skyBridge", at: SPOT.skyBridge, r: 24, name: "The sky bridge", note: "From Meldan up to the mountain shoulder and the tunnel to the archive." },
+  { id: "forest", at: FOREST_PATH[4], r: 40, name: "Kalimar forest", note: "Pine paths south of Meldan. Gladias walks them most evenings." },
+  { id: "lenSu", at: SPOT.lenSu, r: 22, name: "Len Su street", note: "Sadzu Du's street of food courts. Pay at the green circle; only you and the court know what you ordered." },
+  { id: "trucks", at: { x: 1350, y: 470 }, r: 40, name: "Dzego's food trucks", note: "Where Number Ten comes from, if you ask Zei." },
+  { id: "school", at: { x: SPOT.school.x, y: SPOT.school.y - 10 }, r: 24, name: "The harbor school", note: "The schools are full, so the kids of Greater Plum Harbor take informal lessons together." },
+  { id: "silverchat", at: { x: SPOT.silverchat.x, y: SPOT.silverchat.y - 14 }, r: 22, name: "Silverchat", note: "Evelor's company, which publishes a proof of every algorithm change." },
 ];
 
 /** Roads between places: polylines in world units, also the paths light and walkers follow. */
@@ -405,6 +453,85 @@ export function paintStatic(ctx: CanvasRenderingContext2D, homes: { id: string; 
   label(ctx, "school", gph.x - 60, gph.y + 32, 13);
   for (let i = 0; i < 6; i++) house(ctx, gph.x + 20 + (i % 3) * 26, gph.y - 20 + Math.floor(i / 3) * 34, 16, 12);
 
+  // the couriers' post by the toll road: a low house under a slate roof, a sealed envelope over the door
+  const cp = SPOT.couriers;
+  house(ctx, cp.x, cp.y, 30, 16);
+  ctx.fillStyle = COLORS.slate;
+  ctx.beginPath();
+  ctx.moveTo(cp.x - 18, cp.y - 16);
+  ctx.lineTo(cp.x, cp.y - 27);
+  ctx.lineTo(cp.x + 18, cp.y - 16);
+  ctx.closePath();
+  ctx.fill();
+  envelope(ctx, cp.x, cp.y - 20, 1);
+  label(ctx, "couriers' post", cp.x, cp.y + 16, 13);
+
+  // Silverchat's house in Freetown: taller, with a slate band
+  const sc = SPOT.silverchat;
+  ctx.fillStyle = COLORS.stone;
+  ctx.fillRect(sc.x - 14, sc.y - 30, 28, 30);
+  ctx.fillStyle = COLORS.slate;
+  ctx.fillRect(sc.x - 14, sc.y - 22, 28, 4);
+  ctx.fillStyle = COLORS.snow;
+  ctx.fillRect(sc.x - 16, sc.y - 33, 32, 4);
+  ctx.fillStyle = COLORS.pine;
+  ctx.fillRect(sc.x - 3, sc.y - 8, 6, 8);
+  label(ctx, "Silverchat", sc.x, sc.y + 16, 13);
+
+  // the ballot box in the square
+  ctx.fillStyle = COLORS.slate;
+  ctx.fillRect(SPOT.ballot.x - 5, SPOT.ballot.y - 9, 10, 9);
+  ctx.fillStyle = COLORS.pine;
+  ctx.fillRect(SPOT.ballot.x - 3, SPOT.ballot.y - 8, 6, 1.2);
+
+  // lantern posts along the forest path, lamps on Len Su street, the pier and the couriers' door
+  for (const l of LAMPS) {
+    ctx.fillStyle = COLORS.roof;
+    ctx.fillRect(l.x - 0.7, l.y, 1.4, 11);
+    ctx.fillStyle = "#D8CFB8";
+    ctx.fillRect(l.x - 2, l.y - 3, 4, 4);
+  }
+
+  // a chalkboard where the harbor kids take their lessons
+  const lb = SPOT.lessons;
+  ctx.fillStyle = COLORS.roof;
+  ctx.fillRect(lb.x - 12, lb.y - 2, 2, 10);
+  ctx.fillRect(lb.x + 10, lb.y - 2, 2, 10);
+  ctx.fillStyle = "#3D4E45";
+  ctx.fillRect(lb.x - 14, lb.y - 16, 28, 15);
+  ctx.strokeStyle = "rgba(236,240,236,0.8)";
+  ctx.lineWidth = 0.8;
+  ctx.beginPath();
+  ctx.moveTo(lb.x - 10, lb.y - 11);
+  ctx.lineTo(lb.x - 2, lb.y - 11);
+  ctx.moveTo(lb.x - 10, lb.y - 5);
+  ctx.quadraticCurveTo(lb.x, lb.y - 12, lb.x + 9, lb.y - 5);
+  ctx.stroke();
+  label(ctx, "lessons", lb.x, lb.y + 20, 12);
+
+  // Number Ten, chalked on the middle truck
+  ctx.font = "bold 6px 'IBM Plex Sans', system-ui, sans-serif";
+  ctx.textAlign = "center";
+  ctx.fillStyle = COLORS.pine;
+  ctx.fillText("No.10", TRUCKS[1].x - 3, TRUCKS[1].y - 17);
+  label(ctx, "food trucks", 1352, 522, 13);
+
+  // Hydrafill's ads really are everywhere
+  for (const [ax, ay] of [
+    [760, 286],
+    [680, 740],
+    [1262, 372],
+  ]) {
+    ctx.fillStyle = COLORS.roof;
+    ctx.fillRect(ax - 7, ay - 2, 1.5, 10);
+    ctx.fillRect(ax + 6, ay - 2, 1.5, 10);
+    ctx.fillStyle = COLORS.slate;
+    ctx.fillRect(ax - 9, ay - 14, 18, 12);
+    ctx.fillStyle = COLORS.snow;
+    ctx.fillRect(ax - 2, ay - 12, 4, 8);
+    ctx.fillRect(ax - 1, ay - 13.5, 2, 2);
+  }
+
   // place names
   // Meldan's name sits south-west of the square, clear of the bridge and the board
   for (const c of Object.values(CITY)) label(ctx, c.label, c.label === "Meldan" ? c.x - 120 : c.x, c.label === "Meldan" ? c.y + 10 : c.y - 84, 24);
@@ -424,6 +551,24 @@ function court(ctx: CanvasRenderingContext2D, x: number, y: number, awning: stri
     ctx.fill();
   }
   ctx.fillRect(x - w / 2, y - 20, w, 4);
+}
+
+/** A sealed envelope (a proof in a courier's care), centered at x, y. */
+export function envelope(ctx: CanvasRenderingContext2D, x: number, y: number, s: number) {
+  ctx.fillStyle = "#FBF8EF";
+  ctx.fillRect(x - 4 * s, y - 2.6 * s, 8 * s, 5.4 * s);
+  ctx.strokeStyle = COLORS.stoneDark;
+  ctx.lineWidth = 0.6 * s;
+  ctx.strokeRect(x - 4 * s, y - 2.6 * s, 8 * s, 5.4 * s);
+  ctx.beginPath();
+  ctx.moveTo(x - 4 * s, y - 2.6 * s);
+  ctx.lineTo(x, y + 0.6 * s);
+  ctx.lineTo(x + 4 * s, y - 2.6 * s);
+  ctx.stroke();
+  ctx.fillStyle = COLORS.candle;
+  ctx.beginPath();
+  ctx.arc(x, y + 0.6 * s, 1 * s, 0, Math.PI * 2);
+  ctx.fill();
 }
 
 function truck(ctx: CanvasRenderingContext2D, x: number, y: number) {
